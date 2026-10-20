@@ -38,4 +38,17 @@ Open <http://localhost:8000/docs/>. The only runtime dependency is Three.js load
 4. Select the `main` branch and the `/docs` folder, then click **Save**.
 5. Wait for the Pages deployment action to finish. GitHub will display the published URL; open it over HTTPS so WebGL, modules, storage, and Web Audio work correctly.
 
-The deployable files are exactly `docs/index.html`, `docs/style.css`, and `docs/game.js`. `index.html` references the CSS and module with relative paths, so the `/docs` Pages source works without rewriting or a build command.
+The deployable files are `docs/index.html`, `docs/style.css`, `docs/game.js`, and `docs/combat.mjs`. The HTML and JavaScript use relative imports, so the `/docs` Pages source works without rewriting or a build command.
+
+## Regression checks
+
+With a current Node.js version, run:
+
+```bash
+node --check docs/game.js
+node --check docs/combat.mjs
+node --test tests/combat.test.mjs
+git diff --check
+```
+
+Combat uses a shared XY plane: player shots travel upward, enemy shots travel downward, and diving enemies return to their original moving formation slot. Tests cover the combat helpers and the actual game loop with rendering/DOM substitutes. They do not replace a real WebGL/browser check.
