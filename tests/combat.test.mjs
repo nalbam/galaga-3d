@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import * as combat from '../docs/combat.mjs';
+import { difficultyForStage } from '../docs/combat.mjs';
 
 const { COMBAT_Z, PLAYER_Y, DIVE_DURATION, RETURN_DURATION, formationPosition,
   beginDive, enemyPosition, createProjectile, advanceProjectile, projectileHits } = combat;
@@ -69,7 +70,7 @@ test('stationary shots and subsequent frames do not reuse an old collision segme
 
 // Execute the real game functions with a small rendering/DOM substitute. This
 // checks their wiring, not WebGL rendering; no remote Three.js import is needed.
-function loadGame() {
+function loadGame(random = .99) {
   class Vector3 {
     constructor(x = 0, y = 0, z = 0) { this.set(x, y, z); }
     set(x, y, z) { Object.assign(this, { x, y, z }); return this; }
@@ -116,7 +117,7 @@ function loadGame() {
     return elements.get(selector);
   };
   const math = Object.create(Math);
-  math.random = () => .99; // No random dives/fire during deterministic game-loop tests.
+  math.random = () => random; // No random dives/fire during deterministic game-loop tests.
   const windowEvents = {};
   const context = vm.createContext({
     ...combat, THREE, Math: math, devicePixelRatio: 1,
@@ -257,4 +258,68 @@ test('actual loop returns a diver to its original slot and removes offscreen sho
   runtime.enemyShots[0].position.y = -11.9;
   runtime.update(.05);
   assert.equal(runtime.enemyShots.length, 0);
+});
+
+const CONTINUOUS = ['diveChance', 'enemyShotSpeed', 'diveFireChance', 'bossFireChance'];
+const stages = Array.from({ length: 60 }, (_, i) => i + 1);
+
+test('difficulty never decreases, stage 1 is easiest and values are capped', () => {
+  for (const stage of stages.slice(1)) {
+    const prev = difficultyForStage(stage - 1), now = difficultyForStage(stage);
+    for (const key of [...CONTINUOUS, 'maxConcurrentDives', 'maxEnemyShots', 'rows']) assert.ok(now[key] >= prev[key], `${key} @${stage}`);
+    assert.ok(now.fireInterval <= prev.fireInterval, `fireInterval @${stage}`);
+  }
+  const first = difficultyForStage(1), late = difficultyForStage(1000);
+  assert.ok(late.diveChance < .035 && late.enemyShotSpeed < 10 && late.fireInterval > .75 && late.diveFireChance < .25);
+  assert.ok(late.maxConcurrentDives <= 4 && late.maxEnemyShots <= 8 && late.rows <= 5 && late.eliteCount <= 7);
+  assert.equal(first.maxConcurrentDives, 1);
+  assert.equal(first.eliteCount + first.bossHealth, 0);
+  assert.ok(difficultyForStage(3).fireInterval > 1.5 && difficultyForStage(3).enemyShotSpeed < 7);
+});
+
+test('consecutive stages change difficulty by small steps', () => {
+  for (const stage of stages.slice(1)) {
+    const prev = difficultyForStage(stage - 1), now = difficultyForStage(stage);
+    for (const key of [...CONTINUOUS, 'fireInterval']) assert.ok(Math.abs(now[key] / prev[key] - 1) <= .35, `${key} @${stage}`);
+    for (const key of ['maxConcurrentDives', 'maxEnemyShots', 'rows']) assert.ok(now[key] - prev[key] <= 1, `${key} @${stage}`);
+    assert.ok(now.eliteCount - prev.eliteCount <= 2, `eliteCount @${stage}`);
+  }
+  const bosses = stages.map(s => difficultyForStage(s).bossHealth).filter(Boolean);
+  assert.ok(bosses.every((hp, i) => i === 0 || (hp >= bosses[i - 1] && hp - bosses[i - 1] <= 1)) && Math.max(...bosses) <= 10);
+});
+
+test('actual loop limits concurrent dives and enemy shots, and restart resets to stage 1', () => {
+  const runtime = loadGame();
+  runtime.startGame();
+  runtime.game.stage = 1;
+  runtime.game.enemyFire = 1000;
+  for (let i = 0; i < 6; i++) runtime.fireEnemy(runtime.enemies[i]);
+  assert.equal(runtime.enemyShots.length, difficultyForStage(1).maxEnemyShots);
+  runtime.game.stage = 12;
+  runtime.createWave();
+  const eliteRow = runtime.enemies.filter(e => e.type === 'elite').length;
+  assert.equal(eliteRow, difficultyForStage(12).eliteCount);
+  assert.equal(runtime.enemies.find(e => e.type === 'boss').health, difficultyForStage(12).bossHealth);
+  runtime.game.state = 'over';
+  runtime.startGame();
+  assert.equal(runtime.game.stage, 1);
+  assert.equal(runtime.enemies.length, difficultyForStage(1).rows * 7);
+});
+
+test('actual loop never exceeds the concurrent dive cap even when every roll succeeds', () => {
+  const runtime = loadGame(0); // Math.random() === 0: every dive and fire roll succeeds.
+  runtime.startGame();
+  for (const stage of [1, 4, 7, 12]) {
+    runtime.game.stage = stage;
+    runtime.createWave();
+    runtime.game.enemyFire = 1000;
+    const diff = difficultyForStage(stage);
+    for (let frame = 0; frame < 40; frame++) {
+      runtime.player.invulnerable = 10;
+      runtime.update(.05);
+      assert.ok(runtime.enemies.filter(e => e.diving).length <= diff.maxConcurrentDives);
+      assert.ok(runtime.enemyShots.length <= diff.maxEnemyShots);
+    }
+    assert.equal(runtime.enemies.filter(e => e.diving).length, diff.maxConcurrentDives);
+  }
 });
