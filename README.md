@@ -51,4 +51,4 @@ node --test tests/combat.test.mjs
 git diff --check
 ```
 
-Combat uses a shared XY plane: player shots travel upward, enemy shots travel downward, and diving enemies return to their original moving formation slot. Tests cover the combat helpers and the actual game loop with rendering/DOM substitutes. They do not replace a real WebGL/browser check.
+Combat uses a shared XY plane: player shots travel upward, enemy shots travel downward, and diving enemies return to their original moving formation slot. Stage difficulty (dive chance, fire interval, shot speed, concurrent dives and shots, rows, elites, boss health) comes from the pure `difficultyForStage(stage)` in `docs/combat.mjs`; values saturate at fixed caps. Tests cover the combat helpers, the difficulty curve (monotonic, capped, small per-stage steps) and the actual game loop with rendering/DOM substitutes. They do not replace a real WebGL/browser check.

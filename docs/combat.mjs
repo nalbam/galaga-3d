@@ -54,3 +54,27 @@ export function projectileHits(shot, target, radius) {
     ((target.x - from.x) * dx + (target.y - from.y) * dy + (target.z - from.z) * dz) / lengthSquared));
   return Math.hypot(target.x - from.x - dx * t, target.y - from.y - dy * t, target.z - from.z - dz * t) < radius;
 }
+
+// Difficulty is a pure function of the stage. Continuous values approach a cap
+// along 1-exp(-(stage-1)/k), so stage 1 is the easiest and steps shrink over time.
+// Integer values (dives, rows, elites) change by at most one step per stage.
+const ease = (stage, start, cap, k) => start + (cap - start) * (1 - Math.exp(-(Math.max(1, stage) - 1) / k));
+export const WAVE_COLUMNS = 7;
+
+export function difficultyForStage(stage) {
+  stage = Math.max(1, Math.floor(stage) || 1);
+  const diveFireChance = ease(stage, .12, .22, 8);
+  const hasBoss = stage >= 3 && stage % 3 === 0;
+  return {
+    diveChance: ease(stage, .010, .032, 6),            // per grounded enemy per second
+    fireInterval: ease(stage, 2.2, .8, 7),             // seconds between random formation shots
+    enemyShotSpeed: ease(stage, 5.5, 9.5, 8),          // world units per second
+    diveFireChance,                                    // per diving enemy per second
+    bossFireChance: diveFireChance * 1.5,
+    maxConcurrentDives: Math.min(4, 1 + Math.floor((stage - 1) / 3)),
+    maxEnemyShots: Math.min(8, 3 + Math.floor(stage / 3)),
+    rows: Math.min(5, 3 + Math.floor((stage - 1) / 3)),
+    eliteCount: stage < 3 ? 0 : Math.min(WAVE_COLUMNS, 2 * Math.floor(stage / 3)), // filled from the row ends inward
+    bossHealth: hasBoss ? Math.min(10, 4 + Math.floor(stage / 3)) : 0,
+  };
+}
