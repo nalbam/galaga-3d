@@ -78,3 +78,16 @@ export function difficultyForStage(stage) {
     bossHealth: hasBoss ? Math.min(10, 4 + Math.floor(stage / 3)) : 0,
   };
 }
+
+export const PLAYER_X_LIMIT = 13.5;
+
+// Map a pointer's clientX to a world X on the combat plane for a perspective camera
+// looking down -Z. Returns null for an unusable rect or camera so callers skip the move.
+export function pointerToWorldX({ clientX, rect, fov, aspect, cameraZ, planeZ = COMBAT_Z, limit = PLAYER_X_LIMIT }) {
+  if (!rect || !(rect.width > 0) || !Number.isFinite(clientX)) return null;
+  const distance = cameraZ - planeZ;
+  if (!(distance > 0) || !(aspect > 0) || !(fov > 0 && fov < 180)) return null;
+  const ndc = ((clientX - rect.left) / rect.width) * 2 - 1;
+  const halfWidth = distance * Math.tan(fov * Math.PI / 360) * aspect;
+  return Math.max(-limit, Math.min(limit, ndc * halfWidth));
+}
