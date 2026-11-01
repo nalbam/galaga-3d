@@ -323,3 +323,71 @@ test('actual loop never exceeds the concurrent dive cap even when every roll suc
     assert.equal(runtime.enemies.filter(e => e.diving).length, diff.maxConcurrentDives);
   }
 });
+
+test('pointerToWorldX maps screen X to the combat plane and clamps to the ship limit', () => {
+  const { pointerToWorldX, PLAYER_X_LIMIT } = combat;
+  const camera = (aspect, fov = 60) => ({ fov, aspect, cameraZ: 30 });
+  const halfWidth = c => c.cameraZ * Math.tan(c.fov * Math.PI / 360) * c.aspect;
+  const rect = { left: 100, width: 400 };
+  const wide = camera(2);
+  assert.equal(PLAYER_X_LIMIT, 13.5);
+  assert.ok(Math.abs(pointerToWorldX({ clientX: 300, rect, ...wide })) < 1e-12);
+  assert.ok(halfWidth(wide) > 13.5);
+  assert.equal(pointerToWorldX({ clientX: 100, rect, ...wide }), -13.5);
+  assert.equal(pointerToWorldX({ clientX: 500, rect, ...wide }), 13.5);
+  assert.equal(pointerToWorldX({ clientX: -900, rect, ...wide }), -13.5);
+  assert.equal(pointerToWorldX({ clientX: 9000, rect, ...wide }), 13.5);
+  // Narrow view: the visible half-width is below the limit, so the edges are not clamped.
+  const narrow = { fov: 60, aspect: .5, cameraZ: 30 };
+  const edge = pointerToWorldX({ clientX: 500, rect, ...narrow });
+  assert.ok(Math.abs(edge - halfWidth(narrow)) < 1e-12 && edge < 13.5);
+  assert.ok(Math.abs(pointerToWorldX({ clientX: 400, rect, ...narrow }) - halfWidth(narrow) / 2) < 1e-12);
+  // A different canvas size and plane depth change the result accordingly.
+  assert.ok(Math.abs(pointerToWorldX({ clientX: 250, rect: { left: 50, width: 200 }, ...narrow, planeZ: 10 })
+    - 20 * Math.tan(Math.PI / 6) * .5) < 1e-12);
+});
+
+test('pointerToWorldX rejects unusable rects and cameras', () => {
+  const { pointerToWorldX } = combat;
+  const base = { clientX: 10, rect: { left: 0, width: 100 }, fov: 60, aspect: 1, cameraZ: 20 };
+  assert.equal(pointerToWorldX({ ...base, rect: { left: 0, width: 0 } }), null);
+  assert.equal(pointerToWorldX({ ...base, rect: null }), null);
+  assert.equal(pointerToWorldX({ ...base, clientX: NaN }), null);
+  assert.equal(pointerToWorldX({ ...base, aspect: 0 }), null);
+  assert.equal(pointerToWorldX({ ...base, cameraZ: 0 }), null);
+});
+
+test('actual mouse handlers steer on X, fire with the left button only, and ignore buttons and non-playing states', () => {
+  const runtime = loadGame();
+  const stage = runtime.elements.get('#gameStage');
+  const mouse = (extra = {}) => ({ pointerType: 'mouse', button: 0, clientX: 195, target: { closest: () => null }, ...extra });
+  stage.listeners.pointermove(mouse({ clientX: 390 }));
+  assert.equal(runtime.player.x, 0, 'ignored before the game starts');
+  stage.listeners.pointerdown(mouse());
+  assert.equal(runtime.shots.length, 0);
+  runtime.startGame();
+  runtime.game.enemyFire = 1000;
+  stage.listeners.pointermove(mouse({ clientX: 390 }));
+  assert.equal(runtime.player.x, 13.5);
+  assert.equal(runtime.player.mesh.position.x, 13.5);
+  assert.equal(runtime.player.mesh.position.y, PLAYER_Y);
+  runtime.player.cooldown = 0;
+  stage.listeners.pointerdown(mouse({ button: 2 }));
+  stage.listeners.pointerdown(mouse({ button: 1 }));
+  stage.listeners.pointerdown(mouse({ target: { closest: () => ({}) } }));
+  assert.equal(runtime.shots.length, 0);
+  assert.equal(runtime.game.mouseFire, false);
+  stage.listeners.pointerdown(mouse());
+  assert.equal(runtime.shots.length, 1);
+  assert.equal(runtime.game.mouseFire, true);
+  runtime.update(.1);
+  assert.equal(runtime.shots.length, 1, 'cooldown .22 still applies');
+  runtime.update(.15);
+  assert.equal(runtime.shots.length, 2);
+  runtime.game.state = 'paused';
+  runtime.game.mouseFire = true;
+  stage.listeners.pointermove(mouse({ clientX: 0 }));
+  assert.equal(runtime.player.x, 0, 'paused ignores movement');
+  runtime.windowEvents.blur();
+  assert.equal(runtime.game.mouseFire, false);
+});

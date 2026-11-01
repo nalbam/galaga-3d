@@ -16,6 +16,7 @@ Open <http://localhost:8000/docs/>. The only runtime dependency is Three.js load
 
 - Move: `ArrowLeft` / `ArrowRight` or `A` / `D`
 - Fire: `Space`
+- Mouse: move the pointer to steer the ship along the X axis (mapped to the combat plane through the camera); hold the left button to fire at the normal `.22 s` interval. Clicks on menu, sound, and touch buttons do not move or fire.
 - Pause/resume: `P` or `Escape`
 - Touch devices: use the on-screen left, fire, and right buttons
 - `SOUND ON/OFF` toggles Web Audio sound effects
