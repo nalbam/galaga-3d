@@ -1,0 +1,204 @@
+{
+  "startedAt": "2026-11-06T15:43:44.096Z",
+  "gitHead": "53277620b2b7f4b9fccbb7c7539ed1ae1f89648a",
+  "sources": {
+    "docs/game.js": "137b7cd8e04a0a7f31e32f460feda494c239e70c4d59c6646ea74a7316f768fb",
+    "docs/combat.mjs": "a7504402b886cc185d734645457ac7529d1dec10bdb5574b6bdf6884294f2832",
+    "docs/index.html": "b80d1cc93baadf89f0b93b110b6a17d530267bd0e1b21ded5bd7eceb188149d2",
+    "docs/style.css": "b7b9f07fdd0a799aaab9cff3b183ea9ab9475d2f86c61eec968eaa1d944aabd8",
+    "tests/browser/particle-damping.mjs": "e549395583dd6c156de0ae7a69d65b7c8a9bc514fbd42c9f3d1a005101b3d5fc"
+  },
+  "launchArgs": [
+    "--use-angle=swiftshader",
+    "--enable-unsafe-swiftshader"
+  ],
+  "url": "http://127.0.0.1:8765/index.html",
+  "frameMs": 16.666666666666668,
+  "console": [],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "requestFailures": [],
+  "screenshots": [
+    {
+      "file": "00-start-screen.png",
+      "note": "Start overlay before input",
+      "virtualMs": 83.333,
+      "wallMs": 3417,
+      "hud": {
+        "score": "000000",
+        "highScore": "000000",
+        "stage": "01",
+        "lives": "♥♥♥"
+      }
+    },
+    {
+      "file": "01-playing.png",
+      "note": "After clicking START MISSION (0.5 s at 60 Hz)",
+      "virtualMs": 583.333,
+      "wallMs": 4031,
+      "hud": {
+        "score": "000000",
+        "highScore": "000000",
+        "stage": "01",
+        "lives": "♥♥♥"
+      }
+    },
+    {
+      "file": "02-hit.png",
+      "note": "Same explosion, 0 frames (0.00 s) after the hit frame",
+      "virtualMs": 1916.667,
+      "wallMs": 10776,
+      "hud": {
+        "score": "000100",
+        "highScore": "000100",
+        "stage": "01",
+        "lives": "♥♥♥"
+      },
+      "zoom": "02-hit-zoom.png"
+    },
+    {
+      "file": "03-spread-0.10s.png",
+      "note": "Same explosion, 6 frames (0.10 s) after the hit frame",
+      "virtualMs": 2016.667,
+      "wallMs": 11129,
+      "hud": {
+        "score": "000100",
+        "highScore": "000100",
+        "stage": "01",
+        "lives": "♥♥♥"
+      },
+      "zoom": "03-spread-0.10s-zoom.png"
+    },
+    {
+      "file": "04-spread-0.25s.png",
+      "note": "Same explosion, 15 frames (0.25 s) after the hit frame",
+      "virtualMs": 2166.667,
+      "wallMs": 11511,
+      "hud": {
+        "score": "000100",
+        "highScore": "000100",
+        "stage": "01",
+        "lives": "♥♥♥"
+      },
+      "zoom": "04-spread-0.25s-zoom.png"
+    },
+    {
+      "file": "05-spread-0.45s.png",
+      "note": "Same explosion, 27 frames (0.45 s) after the hit frame",
+      "virtualMs": 2366.667,
+      "wallMs": 11925,
+      "hud": {
+        "score": "000100",
+        "highScore": "000100",
+        "stage": "01",
+        "lives": "♥♥♥"
+      },
+      "zoom": "05-spread-0.45s-zoom.png"
+    },
+    {
+      "file": "06-fade-0.70s.png",
+      "note": "Same explosion, 42 frames (0.70 s) after the hit frame",
+      "virtualMs": 2616.667,
+      "wallMs": 12336,
+      "hud": {
+        "score": "000100",
+        "highScore": "000100",
+        "stage": "01",
+        "lives": "♥♥♥"
+      },
+      "zoom": "06-fade-0.70s-zoom.png"
+    },
+    {
+      "file": "07-gone-1.00s.png",
+      "note": "Same explosion, 60 frames (1.00 s) after the hit frame",
+      "virtualMs": 2916.667,
+      "wallMs": 12884,
+      "hud": {
+        "score": "000100",
+        "highScore": "000100",
+        "stage": "01",
+        "lives": "♥♥♥"
+      },
+      "zoom": "07-gone-1.00s-zoom.png"
+    }
+  ],
+  "browserVersion": "158.0.8127.18",
+  "threeModule": {
+    "url": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "status": 200
+  },
+  "canvas": {
+    "x": 24,
+    "y": 90,
+    "width": 752,
+    "height": 751
+  },
+  "hit": {
+    "attempt": 1,
+    "framesAfterShot": 18,
+    "score": "000100",
+    "x": 364,
+    "y": 324,
+    "changedPixelsInBlock": 612
+  },
+  "particleSeries": {
+    "hitPoint": {
+      "x": 364,
+      "y": 324
+    },
+    "boxRadiusPx": 32,
+    "series": [
+      {
+        "secondsAfterHit": 0,
+        "pinkPixels": 6,
+        "maxDistancePx": 14.1
+      },
+      {
+        "secondsAfterHit": 0.1,
+        "pinkPixels": 55,
+        "maxDistancePx": 19.8
+      },
+      {
+        "secondsAfterHit": 0.25,
+        "pinkPixels": 67,
+        "maxDistancePx": 25.5
+      },
+      {
+        "secondsAfterHit": 0.45,
+        "pinkPixels": 49,
+        "maxDistancePx": 27.2
+      },
+      {
+        "secondsAfterHit": 0.7,
+        "pinkPixels": 20,
+        "maxDistancePx": 27.3
+      },
+      {
+        "secondsAfterHit": 1,
+        "pinkPixels": 0,
+        "maxDistancePx": 0
+      }
+    ]
+  },
+  "finishedAt": "2026-11-06T15:43:57.088Z",
+  "wallMs": 12992,
+  "note": "CPU (SwiftShader) rendering with a virtual frame clock; wall times are not device performance.",
+  "failures": [],
+  "passed": true,
+  "files": [
+    "00-start-screen.png",
+    "01-playing.png",
+    "02-hit-zoom.png",
+    "02-hit.png",
+    "03-spread-0.10s-zoom.png",
+    "03-spread-0.10s.png",
+    "04-spread-0.25s-zoom.png",
+    "04-spread-0.25s.png",
+    "05-spread-0.45s-zoom.png",
+    "05-spread-0.45s.png",
+    "06-fade-0.70s-zoom.png",
+    "06-fade-0.70s.png",
+    "07-gone-1.00s-zoom.png",
+    "07-gone-1.00s.png"
+  ]
+}
