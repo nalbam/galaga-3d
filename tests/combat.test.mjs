@@ -117,7 +117,8 @@ function loadGame(random = .99) {
     return elements.get(selector);
   };
   const math = Object.create(Math);
-  math.random = () => random; // No random dives/fire during deterministic game-loop tests.
+  // A number disables random dives/fire; a function supplies a deterministic sequence.
+  math.random = typeof random === 'function' ? random : () => random;
   const windowEvents = {};
   const context = vm.createContext({
     ...combat, THREE, Math: math, devicePixelRatio: 1,
@@ -128,7 +129,7 @@ function loadGame(random = .99) {
   });
   const source = readFileSync(new URL('../docs/game.js', import.meta.url), 'utf8');
   vm.runInContext(source.replace(/^import .*;\n/gm, ''), context);
-  const runtime = vm.runInContext('({ game, player, enemies, shots, enemyShots, scene, camera, startGame, createWave, firePlayer, fireEnemy, update, collisions, resize })', context);
+  const runtime = vm.runInContext('({ game, player, enemies, shots, enemyShots, particles, scene, camera, startGame, createWave, firePlayer, fireEnemy, explode, update, collisions, resize })', context);
   runtime.game.muted = true;
   return { ...runtime, elements, windowEvents };
 }
@@ -390,4 +391,90 @@ test('actual mouse handlers steer on X, fire with the left button only, and igno
   assert.equal(runtime.player.x, 0, 'paused ignores movement');
   runtime.windowEvents.blur();
   assert.equal(runtime.game.mouseFire, false);
+});
+
+// Deterministic explosion: a seeded sequence while explode() rolls, then .99 so the
+// loop never starts dives or random enemy fire that could disturb the run.
+function explodedGame() {
+  let seed = 12345, rolling = false;
+  const rolls = [];
+  const runtime = loadGame(() => {
+    if (!rolling) return .99;
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    rolls.push(seed / 2147483648);
+    return rolls.at(-1);
+  });
+  runtime.startGame();
+  runtime.game.enemyFire = 1000;
+  runtime.player.invulnerable = 1000;
+  rolling = true;
+  runtime.explode({ x: 1.5, y: -2, z: COMBAT_Z });
+  rolling = false;
+  return { runtime, rolls };
+}
+const snapshot = particles => Array.from(particles, ({ mesh, velocity }) => ({
+  position: { x: mesh.position.x, y: mesh.position.y, z: mesh.position.z },
+  velocity: { x: velocity.x, y: velocity.y, z: velocity.z },
+}));
+
+test('explosion particles move and slow down the same at 30, 60 and 144 Hz and keep the 60 Hz path', () => {
+  const runs = {};
+  let initial;
+  for (const hz of [30, 60, 144]) {
+    const { runtime } = explodedGame();
+    initial ??= snapshot(runtime.particles);
+    assert.deepEqual(snapshot(runtime.particles), initial, 'same starting explosion');
+    // Motion-only comparison: real lifetimes are below 1 s, so stretch them here.
+    // Spawn lifetime and removal are checked by the next test.
+    for (const p of runtime.particles) p.life = 10;
+    for (let frame = 0; frame < hz; frame++) runtime.update(1 / hz);
+    assert.equal(runtime.particles.length, 12);
+    runs[hz] = snapshot(runtime.particles);
+  }
+  const axes = ['x', 'y', 'z'];
+  const close = (actual, expected, label) =>
+    assert.ok(Math.abs(actual - expected) <= 1e-6, `${label}: ${actual} vs ${expected}`);
+  for (const hz of [30, 144]) runs[hz].forEach((p, i) => axes.forEach(axis => {
+    close(p.position[axis], runs[60][i].position[axis], `${hz} Hz particle ${i} position.${axis}`);
+    close(p.velocity[axis], runs[60][i].velocity[axis], `${hz} Hz particle ${i} velocity.${axis}`);
+  }));
+  // Independent expectation: the original 60 Hz rule, 60 frames of move-by-v/60 then v*=.94.
+  initial.forEach((start, i) => axes.forEach(axis => {
+    let position = start.position[axis], velocity = start.velocity[axis];
+    for (let frame = 0; frame < 60; frame++) { position += velocity / 60; velocity *= .94; }
+    close(runs[60][i].velocity[axis], start.velocity[axis] * .94 ** 60, `60 Hz particle ${i} decay.${axis}`);
+    close(runs[60][i].velocity[axis], velocity, `60 Hz particle ${i} legacy velocity.${axis}`);
+    close(runs[60][i].position[axis], position, `60 Hz particle ${i} legacy position.${axis}`);
+  }));
+});
+
+test('explosion particles use real lifetimes, fade with life, ignore dt=0 and are removed at life <= 0', () => {
+  const { runtime, rolls } = explodedGame();
+  const { particles, scene } = runtime;
+  assert.equal(particles.length, 12);
+  assert.equal(rolls.length, 12 * 4);
+  particles.forEach((p, i) => {
+    assert.equal(p.life, .35 + rolls[i * 4 + 3] * .5);
+    assert.ok(p.life >= .35 && p.life < .85);
+    assert.ok(scene.children.includes(p.mesh));
+  });
+  const before = snapshot(particles), lives = Array.from(particles, p => p.life);
+  runtime.update(0);
+  assert.deepEqual(snapshot(particles), before, 'update(0) leaves position and velocity unchanged');
+  assert.deepEqual(Array.from(particles, p => p.life), lives);
+  runtime.update(.1);
+  particles.forEach((p, i) => {
+    assert.ok(Math.abs(p.life - (lives[i] - .1)) < 1e-12);
+    assert.equal(p.mesh.material.opacity, Math.max(0, p.life * 2));
+  });
+  const meshes = particles.map(p => p.mesh);
+  const shortest = particles.reduce((a, b) => (a.life < b.life ? a : b));
+  runtime.update(shortest.life); // This update brings its life to exactly 0 (or below).
+  assert.equal(particles.includes(shortest), false);
+  assert.equal(scene.children.includes(shortest.mesh), false);
+  assert.equal(shortest.mesh.material.opacity, 0);
+  assert.ok(particles.every(p => p.life > 0 && scene.children.includes(p.mesh)));
+  for (let frame = 0; frame < 20 && particles.length; frame++) runtime.update(.05);
+  assert.equal(particles.length, 0);
+  assert.ok(meshes.every(mesh => !scene.children.includes(mesh)));
 });
