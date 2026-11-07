@@ -1,0 +1,469 @@
+{
+  "startedAt": "2026-11-07T12:23:48.446Z",
+  "gitHead": "71498d22b14973a77bd8a5a28eb5265ab6e95fed",
+  "docsDirtyAgainstHead": true,
+  "sources": {
+    "docs/game.js": "3000a8ecae5ceff30ba6da84f0957aaefc007589c0cd571f8f7a8a59d49fea00",
+    "docs/combat.mjs": "31ba415739fd38cd147eb562795e5605c705bf5c979e8f0776166cc16dd19da2",
+    "docs/index.html": "a9830318cf71272fe1acfd9f86d361392fd2781785d3fa545cd371e7c32bb1ed",
+    "docs/style.css": "80f6eaf08c923175362445c331cce60d4b497343b0aa7ba018f01f559360182a",
+    "tests/browser/powerups.mjs": "9e772dc987d8581efa1f4a4f0861663531d54b483c1b21480a3bfaf1f0bdf795"
+  },
+  "launchArgs": [
+    "--use-angle=swiftshader",
+    "--enable-unsafe-swiftshader"
+  ],
+  "command": "PLAYWRIGHT_PREFIX=~/pw node tests/browser/powerups.mjs",
+  "url": "http://127.0.0.1:8766/index.html",
+  "frameMs": 16.666666666666668,
+  "console": [],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "requestFailures": [],
+  "steps": [
+    {
+      "name": "single-shot-before-twin",
+      "virtualMs": 1367,
+      "hud": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": false,
+        "twin": null,
+        "shield": null
+      },
+      "streaks": {
+        "streaks": 1,
+        "xs": [
+          375
+        ],
+        "perFrame": [
+          0,
+          0,
+          0,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "twin-collected",
+      "virtualMs": 4100,
+      "hud": {
+        "score": "000100",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": true,
+        "twin": "TWIN 10s",
+        "shield": null
+      },
+      "kill": {
+        "attempt": 0,
+        "frames": 18
+      },
+      "framesToCollect": 145
+    },
+    {
+      "name": "twin-shots",
+      "virtualMs": 4217,
+      "hud": {
+        "score": "000100",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": true,
+        "twin": "TWIN 10s",
+        "shield": null
+      },
+      "streaks": {
+        "streaks": 2,
+        "xs": [
+          364,
+          385
+        ],
+        "perFrame": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "name": "twin-expired",
+      "virtualMs": 14117,
+      "hud": {
+        "score": "000200",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": false,
+        "twin": null,
+        "shield": null
+      },
+      "framesAfterShots": 594
+    },
+    {
+      "name": "single-shot-after-twin",
+      "virtualMs": 14733,
+      "hud": {
+        "score": "000200",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": false,
+        "twin": null,
+        "shield": null
+      },
+      "streaks": {
+        "streaks": 1,
+        "xs": [
+          375
+        ],
+        "perFrame": [
+          1,
+          1,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "name": "shield-collected",
+      "virtualMs": 19467,
+      "hud": {
+        "score": "000400",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": true,
+        "twin": null,
+        "shield": "SHIELD ×1"
+      },
+      "kill": {
+        "attempt": 1,
+        "frames": 22
+      }
+    },
+    {
+      "name": "both-active",
+      "virtualMs": 22867,
+      "hud": {
+        "score": "000500",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": true,
+        "twin": "TWIN 10s",
+        "shield": "SHIELD ×1"
+      }
+    },
+    {
+      "name": "shield-blocked",
+      "virtualMs": 24617,
+      "hud": {
+        "score": "000500",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": true,
+        "twin": "TWIN 9s",
+        "shield": null
+      },
+      "livesBefore": "♥♥♥",
+      "framesToHit": 100
+    },
+    {
+      "name": "game-over",
+      "virtualMs": 35300,
+      "hud": {
+        "score": "000500",
+        "stage": "01",
+        "lives": "···",
+        "powerupsShown": false,
+        "twin": null,
+        "shield": null
+      },
+      "frames": 505,
+      "gameOverShown": true
+    },
+    {
+      "name": "restarted",
+      "virtualMs": 35800,
+      "hud": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": false,
+        "twin": null,
+        "shield": null
+      }
+    },
+    {
+      "name": "single-shot-after-restart",
+      "virtualMs": 35917,
+      "hud": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": false,
+        "twin": null,
+        "shield": null
+      },
+      "streaks": {
+        "streaks": 1,
+        "xs": [
+          375
+        ],
+        "perFrame": [
+          1,
+          1,
+          1,
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "00-start-screen.png",
+      "note": "Start overlay; power-up HUD hidden",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "hud": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": false,
+        "twin": null,
+        "shield": null
+      }
+    },
+    {
+      "file": "01-playing.png",
+      "note": "Playing, no power-up yet",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "hud": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": false,
+        "twin": null,
+        "shield": null
+      }
+    },
+    {
+      "file": "02-twin-collected.png",
+      "note": "TWIN collected: HUD shows TWIN 10s",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "hud": {
+        "score": "000100",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": true,
+        "twin": "TWIN 10s",
+        "shield": null
+      }
+    },
+    {
+      "file": "03-twin-shots.png",
+      "note": "Two parallel shots with TWIN",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "hud": {
+        "score": "000100",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": true,
+        "twin": "TWIN 10s",
+        "shield": null
+      }
+    },
+    {
+      "file": "04-twin-expired.png",
+      "note": "TWIN expired: single shot, HUD hidden",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "hud": {
+        "score": "000200",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": false,
+        "twin": null,
+        "shield": null
+      }
+    },
+    {
+      "file": "05-both-desktop.png",
+      "note": "TWIN and SHIELD active (desktop 800x900)",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "hud": {
+        "score": "000500",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": true,
+        "twin": "TWIN 10s",
+        "shield": "SHIELD ×1"
+      }
+    },
+    {
+      "file": "06-both-narrow.png",
+      "note": "TWIN and SHIELD active (narrow 390x844, touch buttons visible)",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "hud": {
+        "score": "000500",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": true,
+        "twin": "TWIN 10s",
+        "shield": "SHIELD ×1"
+      }
+    },
+    {
+      "file": "07-shield-blocked.png",
+      "note": "SHIELD consumed by a hit; lives unchanged, TWIN still active",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "hud": {
+        "score": "000500",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": true,
+        "twin": "TWIN 9s",
+        "shield": null
+      }
+    },
+    {
+      "file": "08-game-over.png",
+      "note": "Game over: power-up HUD hidden",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "hud": {
+        "score": "000500",
+        "stage": "01",
+        "lives": "···",
+        "powerupsShown": false,
+        "twin": null,
+        "shield": null
+      }
+    },
+    {
+      "file": "09-restarted.png",
+      "note": "Restarted: lives 3, no power-ups, single shot",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "hud": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "powerupsShown": false,
+        "twin": null,
+        "shield": null
+      }
+    }
+  ],
+  "browserVersion": "158.0.8127.18",
+  "threeModule": {
+    "url": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "status": 200
+  },
+  "twinPlaySeconds": 10.02,
+  "narrowLayout": {
+    "powerups": {
+      "left": 21,
+      "top": 113,
+      "right": 174.96875,
+      "bottom": 136
+    },
+    "hudCells": [
+      {
+        "left": 21,
+        "top": 71,
+        "right": 108,
+        "bottom": 98.1875
+      },
+      {
+        "left": 108,
+        "top": 71,
+        "right": 195,
+        "bottom": 98.1875
+      },
+      {
+        "left": 195,
+        "top": 71,
+        "right": 282,
+        "bottom": 98.1875
+      },
+      {
+        "left": 282,
+        "top": 71,
+        "right": 369,
+        "bottom": 98.1875
+      }
+    ],
+    "buttons": [
+      {
+        "left": 43.328125,
+        "top": 746,
+        "right": 101.328125,
+        "bottom": 792
+      },
+      {
+        "left": 166,
+        "top": 746,
+        "right": 224,
+        "bottom": 792
+      },
+      {
+        "left": 288.65625,
+        "top": 746,
+        "right": 346.65625,
+        "bottom": 792
+      }
+    ],
+    "buttonsShown": "flex"
+  },
+  "finishedAt": "2026-11-07T12:24:30.489Z",
+  "wallMs": 42043,
+  "note": "CPU (SwiftShader) rendering with a virtual frame clock; wall times are not device performance.",
+  "failures": [],
+  "passed": true,
+  "exitCode": 0,
+  "files": [
+    "00-start-screen.png",
+    "01-playing.png",
+    "02-twin-collected.png",
+    "03-twin-shots.png",
+    "04-twin-expired.png",
+    "05-both-desktop.png",
+    "06-both-narrow.png",
+    "07-shield-blocked.png",
+    "08-game-over.png",
+    "09-restarted.png"
+  ]
+}

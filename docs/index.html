@@ -26,13 +26,17 @@
           <div><span class="hud-label">STAGE</span><strong id="stage">01</strong></div>
           <div><span class="hud-label">LIVES</span><strong id="lives">♥♥♥</strong></div>
         </div>
+        <div id="powerups" class="powerups" aria-label="Active power-ups" hidden>
+          <span id="twinStatus" class="power twin" hidden></span>
+          <span id="shieldStatus" class="power shield" hidden></span>
+        </div>
         <div id="toast" class="toast" role="status"></div>
         <section id="startScreen" class="overlay active">
           <p class="eyebrow">// INCOMING TRANSMISSION</p>
           <h1>NEON<br><span>SWARM</span></h1>
           <p class="tagline">DEFEND THE LAST STARLANE</p>
           <button id="startButton" class="primary-button" type="button">START MISSION <span>▶</span></button>
-          <p class="controls-hint">MOVE <kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> &nbsp; FIRE <kbd>SPACE</kbd> &nbsp; MOVE <kbd>MOUSE</kbd> / FIRE <kbd>CLICK</kbd></p>
+          <p class="controls-hint">MOVE <kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> &nbsp; FIRE <kbd>SPACE</kbd> &nbsp; MOVE <kbd>MOUSE</kbd> / FIRE <kbd>CLICK</kbd><br>FLY INTO <span class="hint-twin">TWIN</span> / <span class="hint-shield">SHIELD</span> CAPSULES TO COLLECT</p>
         </section>
         <section id="pauseScreen" class="overlay" hidden>
           <p class="eyebrow">// SIGNAL FROZEN</p><h2>PAUSED</h2>
