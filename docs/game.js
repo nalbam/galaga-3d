@@ -1,12 +1,12 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { COMBAT_Z, PLAYER_Y, beginDive, enemyPosition, formationPosition, createProjectile, advanceProjectile, projectileHits, difficultyForStage, WAVE_COLUMNS, pointerToWorldX } from './combat.mjs';
+import { COMBAT_Z, PLAYER_Y, beginDive, enemyPosition, formationPosition, createProjectile, advanceProjectile, projectileHits, difficultyForStage, WAVE_COLUMNS, pointerToWorldX, rollPowerupDrop, createEffects, applyPowerup, advanceEffects, hasTwin, absorbHit, powerupHudText, POWERUP_FALL_SPEED, POWERUP_PICKUP_RADIUS, POWERUP_BOTTOM_Y } from './combat.mjs';
 
 // NEON SWARM: a self-contained arcade loop. World units are intentionally small;
 // the camera looks down Z; movement, dives, and projectiles share the XY plane.
 const canvas = document.querySelector('#gameCanvas');
 const stageEl = document.querySelector('#gameStage');
 const $ = (selector) => document.querySelector(selector);
-const hud = { score: $('#score'), high: $('#highScore'), stage: $('#stage'), lives: $('#lives') };
+const hud = { score: $('#score'), high: $('#highScore'), stage: $('#stage'), lives: $('#lives'), powerups: $('#powerups'), twin: $('#twinStatus'), shield: $('#shieldStatus') };
 const screens = { start: $('#startScreen'), pause: $('#pauseScreen'), over: $('#gameOverScreen') };
 const COLORS = { cyan: 0x30f3ff, pink: 0xff3dbb, yellow: 0xffe66b, purple: 0x9d58ff, white: 0xffffff };
 const storeKey = 'neon-swarm-high-score';
@@ -19,9 +19,10 @@ camera.position.set(0, 0, 31); camera.lookAt(0, 0, 0);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setClearColor(0x050713, 1);
 
-const game = { state:'start', score:0, stage:1, lives:3, last:0, elapsed:0, spawn:0, enemyFire:1, waveTime:0, shake:0, playerHit:0, muted:false, mouseFire:false };
+const game = { state:'start', score:0, stage:1, lives:3, last:0, elapsed:0, spawn:0, enemyFire:1, waveTime:0, shake:0, playerHit:0, muted:false, mouseFire:false, nextWave:null };
 const player = { mesh:null, x:0, speed:18, cooldown:0, invulnerable:0 };
-const enemies = [], shots = [], enemyShots = [], particles = [], stars = [], keys = new Set();
+const enemies = [], shots = [], enemyShots = [], particles = [], capsules = [], stars = [], keys = new Set();
+let effects = createEffects(), powerHudKey = null;
 let audioContext = null;
 
 // Materials and simple procedural geometry keep the game completely asset-free.
@@ -43,30 +44,58 @@ function makeEnemy(type) {
   if (type === 'boss') { const crown = new THREE.Mesh(new THREE.ConeGeometry(.5,.75,5),mat(COLORS.pink)); crown.position.y=1; group.add(crown); }
   group.userData.core = core; return group;
 }
+// Capsule geometry and materials are created once and shared by every capsule for the page's lifetime,
+// so removing a capsule only detaches it from the scene; nothing per-capsule needs disposing.
+const POWER_COLORS = { twin: 0x5dff9d, shield: 0x4fa8ff };
+const capsuleParts = {
+  shell: new THREE.TorusGeometry(.62, .08, 6, 18), bar: new THREE.CylinderGeometry(.09, .09, .78, 6), orb: new THREE.SphereGeometry(.3, 10, 8),
+  twin: mat(POWER_COLORS.twin), shield: mat(POWER_COLORS.shield), core: mat(COLORS.white),
+};
+function makeCapsule(type) {
+  const group = new THREE.Group();
+  group.add(new THREE.Mesh(capsuleParts.shell, capsuleParts[type]));
+  if (type === 'twin') { for (const x of [-.2, .2]) { const bar = new THREE.Mesh(capsuleParts.bar, capsuleParts.core); bar.position.x = x; group.add(bar); } }
+  else group.add(new THREE.Mesh(capsuleParts.orb, capsuleParts.core));
+  return group;
+}
+const shieldBubble = new THREE.Mesh(new THREE.SphereGeometry(1.25, 14, 10), new THREE.MeshPhongMaterial({ color: POWER_COLORS.shield, emissive: POWER_COLORS.shield, emissiveIntensity: .6, transparent: true, opacity: .28, wireframe: true }));
+shieldBubble.visible = false;
 function addStars() {
   const geo = new THREE.BufferGeometry(); const positions = [];
   for (let i=0;i<420;i++) positions.push((Math.random()-.5)*62, (Math.random()-.5)*38, Math.random()*-95);
   geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3)); const starField = new THREE.Points(geo,new THREE.PointsMaterial({color:0x789bff,size:.09,transparent:true,opacity:.8})); scene.add(starField); stars.push(starField);
   const grid = new THREE.GridHelper(70, 35, 0x253a76, 0x111d45); grid.rotation.x=Math.PI/2; grid.position.set(0,-10,-35); grid.material.transparent=true;grid.material.opacity=.3;scene.add(grid);stars.push(grid);
 }
-function initScene() { addStars(); player.mesh=makeShip(); player.mesh.position.set(0,PLAYER_Y,COMBAT_Z); scene.add(player.mesh); }
+function initScene() { addStars(); player.mesh=makeShip(); player.mesh.position.set(0,PLAYER_Y,COMBAT_Z); player.mesh.add(shieldBubble); scene.add(player.mesh); }
 
 function resize() { const rect=stageEl.getBoundingClientRect(); const width=Math.max(rect.width,320), height=Math.max(rect.height,360); renderer.setSize(width,height,false); camera.aspect=width/height;camera.position.z=Math.max(13,16/camera.aspect)/Math.tan(camera.fov*Math.PI/360);scene.fog.near=camera.position.z+10;scene.fog.far=camera.position.z+100;camera.far=scene.fog.far;camera.updateProjectionMatrix(); }
 function formatScore(value) { return String(Math.max(0,value)).padStart(6,'0'); }
-function updateHud() { hud.score.textContent=formatScore(game.score);hud.high.textContent=formatScore(Math.max(highScore,game.score));hud.stage.textContent=String(game.stage).padStart(2,'0');hud.lives.textContent='♥'.repeat(game.lives)+'·'.repeat(Math.max(0,3-game.lives)); }
+function updateHud() { hud.score.textContent=formatScore(game.score);hud.high.textContent=formatScore(Math.max(highScore,game.score));hud.stage.textContent=String(game.stage).padStart(2,'0');hud.lives.textContent='♥'.repeat(game.lives)+'·'.repeat(Math.max(0,3-game.lives));updatePowerHud(); }
+// Called every frame; the DOM is only written when the shown text changes (once per TWIN second at most).
+function updatePowerHud() { const text=powerupHudText(effects),key=`${text.twin}|${text.shield}`;shieldBubble.visible=effects.shield;if(key===powerHudKey)return;powerHudKey=key;hud.twin.textContent=text.twin;hud.twin.hidden=!text.twin;hud.shield.textContent=text.shield;hud.shield.hidden=!text.shield;hud.powerups.hidden=!text.twin&&!text.shield; }
 function showScreen(name) { Object.entries(screens).forEach(([key,el])=>{el.hidden=key!==name;el.classList.toggle('active',key===name);}); }
 function toast(message) { const el=$('#toast');el.textContent=message;el.classList.remove('show');void el.offsetWidth;el.classList.add('show'); }
 function beep(frequency,duration=.08,type='square') { if(game.muted)return; try { audioContext ||= new (window.AudioContext||window.webkitAudioContext)(); const o=audioContext.createOscillator(), g=audioContext.createGain();o.type=type;o.frequency.value=frequency;g.gain.setValueAtTime(.035,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+duration);o.connect(g).connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+duration); } catch (_) {} }
 function clearDynamic() { [...enemies,...shots,...enemyShots,...particles].forEach(item=>scene.remove(item.mesh||item));enemies.length=0;shots.length=0;enemyShots.length=0;particles.length=0; }
-function startGame() { clearDynamic();game.mouseFire=false;game.state='playing';game.score=0;game.stage=1;game.lives=3;game.elapsed=0;game.waveTime=0;player.x=0;player.mesh.position.set(0,PLAYER_Y,COMBAT_Z);player.cooldown=0;player.invulnerable=1.5;player.mesh.visible=true;showScreen(null);updateHud();createWave();beep(440,.16,'sawtooth'); }
-function createWave() { clearDynamic(); const diff=difficultyForStage(game.stage); const rows=diff.rows; const cols=WAVE_COLUMNS; const eliteEnds=Math.ceil(diff.eliteCount/2); for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){let type=r===0&&(c<eliteEnds||c>=cols-eliteEnds)?'elite':'basic';const enemy={mesh:makeEnemy(type),baseX:(c-(cols-1)/2)*3.2,y:7-r*2.2,row:r,type,phase:Math.random()*6.2,alive:true,diving:false,health:type==='elite'?2:1};enemy.mesh.position.copy(formationPosition(enemy,game.waveTime));enemies.push(enemy);scene.add(enemy.mesh);} if(diff.bossHealth>0){const boss={mesh:makeEnemy('boss'),y:11,baseX:0,row:-1,type:'boss',phase:0,alive:true,diving:false,health:diff.bossHealth};boss.mesh.position.copy(formationPosition(boss,game.waveTime));enemies.push(boss);scene.add(boss.mesh);toast('⚠ ELITE SWARM DETECTED');} }
-function firePlayer() { if(game.state!=='playing'||player.cooldown>0)return; player.cooldown=.22;const mesh=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,1.1,6),mat(COLORS.cyan));mesh.position.set(player.x,PLAYER_Y+.9,COMBAT_Z);scene.add(mesh);shots.push({mesh,...createProjectile(mesh.position,30)});beep(660,.045); }
+// Capsules and effects survive wave changes (clearDynamic) and are cleared only for a new game or game over.
+function resetPowerups() { capsules.forEach(c=>scene.remove(c.mesh));capsules.length=0;effects=createEffects();updatePowerHud(); }
+function spawnCapsule(type,position) { const mesh=makeCapsule(type);mesh.position.set(position.x,position.y,COMBAT_Z);scene.add(mesh);capsules.push({type,mesh}); }
+function collectPowerup(type) { effects=applyPowerup(effects,type);updatePowerHud();toast(type==='twin'?'TWIN CANNON ONLINE':'SHIELD ONLINE');beep(type==='twin'?990:760,.14,'triangle'); }
+function updateCapsules(dt) { for(let i=capsules.length-1;i>=0;i--){const c=capsules[i];c.mesh.position.y-=POWERUP_FALL_SPEED*dt;c.mesh.rotation.y+=dt*3;const picked=c.mesh.position.distanceTo(player.mesh.position)<POWERUP_PICKUP_RADIUS;if(picked||c.mesh.position.y<POWERUP_BOTTOM_Y){scene.remove(c.mesh);capsules.splice(i,1);if(picked)collectPowerup(c.type);}} }
+function startGame() { clearDynamic();resetPowerups();game.nextWave=null;game.mouseFire=false;game.state='playing';game.score=0;game.stage=1;game.lives=3;game.elapsed=0;game.waveTime=0;player.x=0;player.mesh.position.set(0,PLAYER_Y,COMBAT_Z);player.cooldown=0;player.invulnerable=1.5;player.mesh.visible=true;showScreen(null);updateHud();createWave();beep(440,.16,'sawtooth'); }
+function createWave() { clearDynamic();game.nextWave=null; const diff=difficultyForStage(game.stage); const rows=diff.rows; const cols=WAVE_COLUMNS; const eliteEnds=Math.ceil(diff.eliteCount/2); for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){let type=r===0&&(c<eliteEnds||c>=cols-eliteEnds)?'elite':'basic';const enemy={mesh:makeEnemy(type),baseX:(c-(cols-1)/2)*3.2,y:7-r*2.2,row:r,type,phase:Math.random()*6.2,alive:true,diving:false,health:type==='elite'?2:1};enemy.mesh.position.copy(formationPosition(enemy,game.waveTime));enemies.push(enemy);scene.add(enemy.mesh);} if(diff.bossHealth>0){const boss={mesh:makeEnemy('boss'),y:11,baseX:0,row:-1,type:'boss',phase:0,alive:true,diving:false,health:diff.bossHealth};boss.mesh.position.copy(formationPosition(boss,game.waveTime));enemies.push(boss);scene.add(boss.mesh);toast('⚠ ELITE SWARM DETECTED');} }
+function firePlayer() { if(game.state!=='playing'||player.cooldown>0)return; player.cooldown=.22;for(const offset of hasTwin(effects)?[-.45,.45]:[0]){const mesh=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,1.1,6),mat(COLORS.cyan));mesh.position.set(player.x+offset,PLAYER_Y+.9,COMBAT_Z);scene.add(mesh);shots.push({mesh,...createProjectile(mesh.position,30)});}beep(660,.045); }
 function fireEnemy(enemy) { const diff=difficultyForStage(game.stage);if(enemyShots.length>=diff.maxEnemyShots)return;const mesh=new THREE.Mesh(new THREE.SphereGeometry(.12,6,4),mat(COLORS.pink));mesh.position.copy(enemy.mesh.position);scene.add(mesh);enemyShots.push({mesh,...createProjectile(mesh.position,-diff.enemyShotSpeed)});beep(140,.05,'sawtooth'); }
 function explode(position,color=COLORS.pink,big=false) { const amount=big?30:12;for(let i=0;i<amount;i++){const mesh=new THREE.Mesh(new THREE.BoxGeometry(.09,.09,.09),mat(color));mesh.position.copy(position);scene.add(mesh);particles.push({mesh,velocity:new THREE.Vector3((Math.random()-.5)*7,(Math.random()-.5)*7,(Math.random()-.5)*5),life:.35+Math.random()*.5});}beep(big?80:190,big?.25:.1,'sawtooth'); }
-function destroyEnemy(enemy) { if(!enemy.alive)return;enemy.health--;explode(enemy.mesh.position,enemy.type==='elite'?COLORS.purple:enemy.type==='boss'?COLORS.yellow:COLORS.pink,enemy.health<=0&&enemy.type==='boss');if(enemy.health>0)return;enemy.alive=false;game.score+=enemy.type==='boss'?1000:enemy.type==='elite'?250:100;updateHud(); }
-function loseLife() { if(player.invulnerable>0)return;game.lives--;player.invulnerable=2;explode(player.mesh.position,COLORS.cyan,true);updateHud();if(game.lives<=0){game.state='over';const isNewRecord=game.score>highScore;highScore=Math.max(highScore,game.score);localStorage.setItem(storeKey,String(highScore));$('#finalScore').textContent=formatScore(game.score);$('#newHighScore').hidden=!isNewRecord;showScreen('over');beep(55,.5,'sawtooth');}else{player.mesh.visible=true;toast('SHIP DAMAGED // HOLD FORMATION');beep(95,.25,'sawtooth');} }
+function destroyEnemy(enemy) { if(!enemy.alive)return;enemy.health--;explode(enemy.mesh.position,enemy.type==='elite'?COLORS.purple:enemy.type==='boss'?COLORS.yellow:COLORS.pink,enemy.health<=0&&enemy.type==='boss');if(enemy.health>0)return;enemy.alive=false;game.score+=enemy.type==='boss'?1000:enemy.type==='elite'?250:100;
+  // Only a shot that destroys the enemy rolls for a capsule (body collisions do not call destroyEnemy).
+  if(game.state==='playing'){const type=rollPowerupDrop(Math.random);if(type)spawnCapsule(type,enemy.mesh.position);}updateHud(); }
+function loseLife() { if(game.state!=='playing'||player.invulnerable>0)return;const hit=absorbHit(effects);
+  // A shield block uses the normal post-hit invulnerability, so the rest of the same collision cannot hurt the ship.
+  if(hit.absorbed){effects=hit.effects;player.invulnerable=2;explode(player.mesh.position,POWER_COLORS.shield);updateHud();toast('SHIELD ABSORBED HIT');beep(320,.2,'triangle');return;}
+  game.lives--;player.invulnerable=2;explode(player.mesh.position,COLORS.cyan,true);updateHud();if(game.lives<=0){game.state='over';resetPowerups();const isNewRecord=game.score>highScore;highScore=Math.max(highScore,game.score);localStorage.setItem(storeKey,String(highScore));$('#finalScore').textContent=formatScore(game.score);$('#newHighScore').hidden=!isNewRecord;showScreen('over');beep(55,.5,'sawtooth');}else{player.mesh.visible=true;toast('SHIP DAMAGED // HOLD FORMATION');beep(95,.25,'sawtooth');} }
 function collisions() { for(const shot of shots){for(const enemy of enemies){if(!enemy.alive)continue;if(projectileHits(shot,enemy.mesh.position,1.1)){shot.dead=true;destroyEnemy(enemy);break;}}}for(const shot of enemyShots){if(projectileHits(shot,player.mesh.position,.9)){shot.dead=true;loseLife();}}for(const enemy of enemies){if(enemy.alive&&enemy.mesh.position.distanceTo(player.mesh.position)<1.4){enemy.alive=false;loseLife();}} }
-function update(dt) { game.elapsed+=dt;game.waveTime+=dt;player.cooldown=Math.max(0,player.cooldown-dt);player.invulnerable=Math.max(0,player.invulnerable-dt);player.mesh.visible=player.invulnerable<=0||Math.floor(player.invulnerable*10)%2===0;const direction=(keys.has('ArrowRight')||keys.has('d')?1:0)-(keys.has('ArrowLeft')||keys.has('a')?1:0);player.x=THREE.MathUtils.clamp(player.x+direction*player.speed*dt,-13.5,13.5);player.mesh.position.x=player.x;if(keys.has(' ')||keys.has('Spacebar')||game.mouseFire)firePlayer();
+function update(dt) { game.elapsed+=dt;game.waveTime+=dt;player.cooldown=Math.max(0,player.cooldown-dt);player.invulnerable=Math.max(0,player.invulnerable-dt);player.mesh.visible=player.invulnerable<=0||Math.floor(player.invulnerable*10)%2===0;const direction=(keys.has('ArrowRight')||keys.has('d')?1:0)-(keys.has('ArrowLeft')||keys.has('a')?1:0);player.x=THREE.MathUtils.clamp(player.x+direction*player.speed*dt,-13.5,13.5);player.mesh.position.x=player.x;effects=advanceEffects(effects,dt);updatePowerHud();if(keys.has(' ')||keys.has('Spacebar')||game.mouseFire)firePlayer();
   const diff=difficultyForStage(game.stage);let divers=enemies.filter(e=>e.alive&&e.diving).length;
   for(const enemy of enemies){if(!enemy.alive)continue;enemy.mesh.rotation.y+=dt*(enemy.type==='boss'?1.4:2.5);if(!enemy.diving&&enemy.type!=='boss'&&divers<diff.maxConcurrentDives&&Math.random()<dt*diff.diveChance){beginDive(enemy,game.waveTime,player.x,enemy.mesh.position);divers++;}enemy.mesh.position.copy(enemyPosition(enemy,game.waveTime));if((enemy.diving||enemy.type==='boss')&&Math.random()<dt*(enemy.type==='boss'?diff.bossFireChance:diff.diveFireChance))fireEnemy(enemy);}
   game.enemyFire-=dt;if(game.enemyFire<=0){const alive=enemies.filter(e=>e.alive);if(alive.length)fireEnemy(alive[Math.floor(Math.random()*alive.length)]);game.enemyFire=diff.fireInterval;}
@@ -74,8 +103,9 @@ function update(dt) { game.elapsed+=dt;game.waveTime+=dt;player.cooldown=Math.ma
   // Particles keep the original 60 Hz look (move by v/60, then v*=.94 each frame) at any frame rate:
   // decay is .94^(60*dt) and the move is that frame's 60 Hz geometric sum, so splitting dt changes nothing.
   const particleLogDecay=60*dt*Math.log(.94),particleDecay=Math.exp(particleLogDecay),particleMove=-Math.expm1(particleLogDecay)/(60*(1-.94));
-  for(const p of particles){p.mesh.position.addScaledVector(p.velocity,particleMove);p.velocity.multiplyScalar(particleDecay);p.life-=dt;p.mesh.material.opacity=Math.max(0,p.life*2);}collisions();for(const shot of shots)if(shot.mesh.position.y>14)shot.dead=true;for(const shot of enemyShots)if(shot.mesh.position.y<-12)shot.dead=true;
-  removeDead(shots);removeDead(enemyShots);for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0){scene.remove(particles[i].mesh);particles.splice(i,1);}for(let i=enemies.length-1;i>=0;i--)if(!enemies[i].alive){scene.remove(enemies[i].mesh);enemies.splice(i,1);}if(!enemies.length){game.stage++;updateHud();toast(`STAGE ${String(game.stage).padStart(2,'0')} // WAVE INBOUND`);beep(880,.2);setTimeout(()=>{if(game.state==='playing')createWave();},900);}stars[0].rotation.z+=dt*.004; }
+  for(const p of particles){p.mesh.position.addScaledVector(p.velocity,particleMove);p.velocity.multiplyScalar(particleDecay);p.life-=dt;p.mesh.material.opacity=Math.max(0,p.life*2);}collisions();if(game.state==='playing')updateCapsules(dt);for(const shot of shots)if(shot.mesh.position.y>14)shot.dead=true;for(const shot of enemyShots)if(shot.mesh.position.y<-12)shot.dead=true;
+  removeDead(shots);removeDead(enemyShots);for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0){scene.remove(particles[i].mesh);particles.splice(i,1);}for(let i=enemies.length-1;i>=0;i--)if(!enemies[i].alive){scene.remove(enemies[i].mesh);enemies.splice(i,1);}// One stage step per cleared wave; the .9 s delay counts play time, so pause holds it and restart cancels it.
+  if(game.state==='playing'&&!enemies.length){if(game.nextWave===null){game.stage++;updateHud();toast(`STAGE ${String(game.stage).padStart(2,'0')} // WAVE INBOUND`);beep(880,.2);game.nextWave=.9;}else if((game.nextWave-=dt)<=0)createWave();}stars[0].rotation.z+=dt*.004; }
 function removeDead(list){for(let i=list.length-1;i>=0;i--)if(list[i].dead){scene.remove(list[i].mesh);list.splice(i,1);}}
 function render(time=0){requestAnimationFrame(render);const dt=Math.min(.05,(time-game.last)/1000||0);game.last=time;if(game.state==='playing')update(dt);renderer.render(scene,camera);}
 function setPaused(paused){if(paused)game.mouseFire=false;if(game.state==='over'||game.state==='start')return;game.state=paused?'paused':'playing';showScreen(paused?'pause':null);if(!paused)beep(520,.08);}

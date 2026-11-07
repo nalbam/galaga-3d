@@ -91,3 +91,50 @@ export function pointerToWorldX({ clientX, rect, fov, aspect, cameraZ, planeZ = 
   const halfWidth = distance * Math.tan(fov * Math.PI / 360) * aspect;
   return Math.max(-limit, Math.min(limit, ndc * halfWidth));
 }
+
+// Power-up capsules. Each destroyed enemy rolls once; the two kinds share the drop chance equally.
+// Effects are plain values: every function returns a new state and never changes its input.
+export const POWERUP_DROP_CHANCE = .15;
+export const POWERUP_TYPES = Object.freeze(['twin', 'shield']);
+export const TWIN_DURATION = 10;          // seconds of play time; pause does not count
+export const POWERUP_FALL_SPEED = 4;      // world units per second
+export const POWERUP_PICKUP_RADIUS = 1.3; // capsule centre to ship centre
+export const POWERUP_BOTTOM_Y = -12;      // capsules below this line are removed
+
+// random() must return a number in [0, 1). One call per kill: [0, .075) TWIN, [.075, .15) SHIELD, else nothing.
+export function rollPowerupDrop(random) {
+  const roll = random();
+  if (!(roll >= 0 && roll < POWERUP_DROP_CHANCE)) return null;
+  return POWERUP_TYPES[Math.min(POWERUP_TYPES.length - 1, Math.floor(roll / (POWERUP_DROP_CHANCE / POWERUP_TYPES.length)))];
+}
+
+export function createEffects() {
+  return { twin: 0, shield: false };
+}
+
+// TWIN refreshes to the full duration; SHIELD holds at most one block. Both can be active together.
+export function applyPowerup(effects, type) {
+  if (type === 'twin') return { ...effects, twin: TWIN_DURATION };
+  if (type === 'shield') return { ...effects, shield: true };
+  throw new Error(`unknown power-up: ${type}`);
+}
+
+export function advanceEffects(effects, dt) {
+  return { ...effects, twin: Math.max(0, effects.twin - Math.max(0, dt || 0)) };
+}
+
+export const hasTwin = effects => effects.twin > 0;
+
+// A valid hit consumes the shield (and nothing else) instead of a life.
+export function absorbHit(effects) {
+  if (!effects.shield) return { effects, absorbed: false };
+  return { effects: { ...effects, shield: false }, absorbed: true };
+}
+
+// HUD text; an empty string means that part is hidden. TWIN shows whole seconds left.
+export function powerupHudText(effects) {
+  return {
+    twin: hasTwin(effects) ? `TWIN ${Math.ceil(effects.twin)}s` : '',
+    shield: effects.shield ? 'SHIELD ×1' : '',
+  };
+}

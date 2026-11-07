@@ -129,9 +129,9 @@ function loadGame(random = .99) {
   });
   const source = readFileSync(new URL('../docs/game.js', import.meta.url), 'utf8');
   vm.runInContext(source.replace(/^import .*;\n/gm, ''), context);
-  const runtime = vm.runInContext('({ game, player, enemies, shots, enemyShots, particles, scene, camera, startGame, createWave, firePlayer, fireEnemy, explode, update, collisions, resize })', context);
+  const runtime = vm.runInContext('({ game, player, enemies, shots, enemyShots, particles, capsules, scene, camera, startGame, createWave, firePlayer, fireEnemy, explode, update, collisions, resize, destroyEnemy, loseLife, spawnCapsule, render, get effects() { return effects; } })', context);
   runtime.game.muted = true;
-  return { ...runtime, elements, windowEvents };
+  return Object.assign(runtime, { elements, windowEvents }); // keeps the live `effects` getter
 }
 
 test('actual waves, player, boss and portrait camera use a visible shared plane', () => {
@@ -477,4 +477,313 @@ test('explosion particles use real lifetimes, fade with life, ignore dt=0 and ar
   for (let frame = 0; frame < 20 && particles.length; frame++) runtime.update(.05);
   assert.equal(particles.length, 0);
   assert.ok(meshes.every(mesh => !scene.children.includes(mesh)));
+});
+
+// ---- Power-up capsules (TWIN, SHIELD) ----
+const { POWERUP_DROP_CHANCE, TWIN_DURATION, POWERUP_FALL_SPEED, POWERUP_PICKUP_RADIUS, POWERUP_BOTTOM_Y,
+  rollPowerupDrop, createEffects, applyPowerup, advanceEffects, hasTwin, absorbHit, powerupHudText } = combat;
+
+test('drop roll: one call per kill, 15% total, TWIN and SHIELD split it equally at fixed boundaries', () => {
+  assert.equal(POWERUP_DROP_CHANCE, .15);
+  assert.equal(TWIN_DURATION, 10);
+  const roll = value => { let calls = 0; const type = rollPowerupDrop(() => { calls++; return value; }); assert.equal(calls, 1); return type; };
+  assert.equal(roll(0), 'twin');
+  assert.equal(roll(.0749999), 'twin');
+  assert.equal(roll(.075), 'shield');
+  assert.equal(roll(.1499999), 'shield');
+  assert.equal(roll(.15), null);
+  assert.equal(roll(.99), null);
+  assert.equal(roll(NaN), null);
+  const counts = { twin: 0, shield: 0, none: 0 };
+  const n = 100000;
+  for (let i = 0; i < n; i++) counts[rollPowerupDrop(() => i / n) ?? 'none']++;
+  assert.deepEqual(counts, { twin: 7500, shield: 7500, none: 85000 });
+});
+
+test('effects: apply, refresh, hold both, expire TWIN by time and consume SHIELD without mutating input', () => {
+  const empty = Object.freeze(createEffects());
+  assert.deepEqual(empty, { twin: 0, shield: false });
+  assert.deepEqual(powerupHudText(empty), { twin: '', shield: '' });
+  const twin = Object.freeze(applyPowerup(empty, 'twin'));
+  assert.equal(twin.twin, 10);
+  assert.ok(hasTwin(twin) && !hasTwin(empty));
+  const later = Object.freeze(advanceEffects(twin, 7.5));
+  assert.equal(later.twin, 2.5);
+  assert.equal(applyPowerup(later, 'twin').twin, 10, 'pickup refreshes to 10 s, does not add');
+  const both = Object.freeze(applyPowerup(later, 'shield'));
+  assert.deepEqual(both, { twin: 2.5, shield: true });
+  assert.deepEqual(applyPowerup(both, 'shield'), both, 'a second SHIELD still blocks once');
+  assert.deepEqual(powerupHudText(both), { twin: 'TWIN 3s', shield: 'SHIELD ×1' });
+  assert.equal(advanceEffects(both, 2.4999).twin > 0, true);
+  const expired = advanceEffects(both, 2.5);
+  assert.deepEqual(expired, { twin: 0, shield: true }, 'SHIELD has no timer');
+  assert.equal(hasTwin(expired), false);
+  assert.deepEqual(advanceEffects(both, -1), both, 'negative dt is ignored');
+  assert.deepEqual(advanceEffects(expired, 5), expired);
+  assert.deepEqual(absorbHit(later), { effects: later, absorbed: false });
+  assert.deepEqual(absorbHit(both), { effects: { twin: 2.5, shield: false }, absorbed: true }, 'consuming SHIELD keeps TWIN');
+  assert.throws(() => applyPowerup(empty, 'laser'));
+  assert.deepEqual(twin, { twin: 10, shield: false });
+  assert.deepEqual(both, { twin: 2.5, shield: true });
+});
+
+// Deterministic game: Math.random returns `rng.value`; .99 never starts dives, enemy fire or drops.
+function powerGame() {
+  const rng = { value: .99, calls: 0 };
+  const runtime = loadGame(() => { rng.calls++; return rng.value; });
+  runtime.startGame();
+  runtime.game.enemyFire = 1000;
+  return { runtime, rng };
+}
+const collect = (runtime, type) => {
+  runtime.update(0); // sync the ship mesh with player.x
+  runtime.spawnCapsule(type, runtime.player.mesh.position);
+  runtime.update(0);
+  assert.equal(runtime.capsules.length, 0);
+};
+const powerHud = runtime => ({
+  box: runtime.elements.get('#powerups').hidden,
+  twin: [runtime.elements.get('#twinStatus').hidden, runtime.elements.get('#twinStatus').textContent],
+  shield: [runtime.elements.get('#shieldStatus').hidden, runtime.elements.get('#shieldStatus').textContent],
+});
+const HUD_HIDDEN = { box: true, twin: [true, ''], shield: [true, ''] };
+
+test('actual kills roll for a drop exactly once; non-lethal hits and body collisions never drop', () => {
+  const { runtime, rng } = powerGame();
+  runtime.game.stage = 3;
+  runtime.createWave();
+  const elite = runtime.enemies.find(e => e.type === 'elite');
+  rng.value = .05; // TWIN when rolled
+  rng.calls = 0;
+  runtime.destroyEnemy(elite); // 2 -> 1 health
+  assert.equal(rng.calls, 12 * 4, 'only the explosion uses random numbers');
+  assert.equal(runtime.capsules.length, 0);
+  rng.calls = 0;
+  elite.mesh.position.set(2, 3, COMBAT_Z);
+  runtime.destroyEnemy(elite);
+  assert.equal(rng.calls, 12 * 4 + 1, 'explosion plus one drop roll');
+  assert.equal(runtime.capsules.length, 1);
+  assert.equal(runtime.capsules[0].type, 'twin');
+  assert.deepEqual({ ...runtime.capsules[0].mesh.position }, { x: 2, y: 3, z: COMBAT_Z });
+  assert.ok(runtime.scene.children.includes(runtime.capsules[0].mesh));
+  runtime.destroyEnemy(elite);
+  assert.equal(runtime.capsules.length, 1, 'a dead enemy cannot drop again');
+  rng.value = .1; // SHIELD when rolled
+  const basic = runtime.enemies.find(e => e.type === 'basic' && e.alive);
+  runtime.destroyEnemy(basic);
+  assert.equal(runtime.capsules.at(-1).type, 'shield');
+  rng.value = .99;
+  runtime.destroyEnemy(runtime.enemies.find(e => e.type === 'basic' && e.alive));
+  assert.equal(runtime.capsules.length, 2, 'roll >= .15 drops nothing');
+  // Body collision: the enemy is gone and a life is lost, but nothing drops even with a winning roll.
+  rng.value = .05;
+  runtime.player.invulnerable = 0;
+  const rammer = runtime.enemies.find(e => e.alive);
+  rammer.mesh.position.copy(runtime.player.mesh.position);
+  runtime.collisions();
+  assert.equal(rammer.alive, false);
+  assert.equal(runtime.game.lives, 2);
+  assert.equal(runtime.capsules.length, 2);
+});
+
+test('actual capsules fall, are collected on contact and are removed below the screen', () => {
+  const { runtime, rng } = powerGame();
+  const { player, capsules, scene } = runtime;
+  player.invulnerable = 1000;
+  rng.value = .05;
+  const enemy = runtime.enemies[0];
+  enemy.mesh.position.set(0, 0, COMBAT_Z);
+  runtime.destroyEnemy(enemy);
+  rng.value = .99;
+  const capsule = capsules[0];
+  runtime.update(.05);
+  assert.ok(Math.abs(capsule.mesh.position.y - (0 - POWERUP_FALL_SPEED * .05)) < 1e-12);
+  assert.equal(capsule.mesh.position.x, 0);
+  assert.deepEqual(powerHud(runtime), HUD_HIDDEN);
+  let frames = 1;
+  while (capsules.length && frames < 200) { runtime.update(.05); frames++; }
+  assert.equal(capsules.length, 0);
+  assert.equal(scene.children.includes(capsule.mesh), false);
+  assert.ok(capsule.mesh.position.distanceTo(player.mesh.position) < POWERUP_PICKUP_RADIUS);
+  assert.ok(hasTwin(runtime.effects));
+  assert.deepEqual(powerHud(runtime), { box: false, twin: [false, 'TWIN 10s'], shield: [true, ''] });
+  // Missed capsule: the ship is far away, so it falls past the bottom and is removed without effect.
+  player.x = 13.5;
+  runtime.spawnCapsule('shield', { x: -10, y: 0 });
+  const missed = capsules[0];
+  while (capsules.length && frames < 1000) { runtime.update(.05); frames++; }
+  assert.ok(missed.mesh.position.y < POWERUP_BOTTOM_Y);
+  assert.equal(scene.children.includes(missed.mesh), false);
+  assert.equal(runtime.effects.shield, false);
+});
+
+test('actual TWIN fires two parallel shots at the .22 s interval and returns to one shot after 10 s of play', () => {
+  const { runtime } = powerGame();
+  const { player, shots } = runtime;
+  player.invulnerable = 1000;
+  player.x = 13.5; // far from the formation so shots do not hit anything
+  runtime.update(0);
+  collect(runtime, 'twin');
+  runtime.windowEvents.keydown({ key: ' ', preventDefault() {} });
+  runtime.update(.05);
+  assert.equal(shots.length, 2);
+  assert.deepEqual(Array.from(shots, s => s.position.x), [13.05, 13.95]);
+  assert.equal(shots[0].position.y, shots[1].position.y);
+  assert.ok(shots.every(s => s.velocity === 30 && s.position.z === COMBAT_Z));
+  runtime.update(.1);
+  assert.equal(shots.length, 2, 'cooldown still applies');
+  runtime.update(.15);
+  assert.equal(shots.length, 4);
+  runtime.windowEvents.keyup({ key: ' ' });
+  // 10 - .05 - .1 - .15 = 9.7 s left. Pause does not run update(), so time and capsules stop.
+  runtime.spawnCapsule('shield', { x: -10, y: 5 });
+  const capsuleY = runtime.capsules[0].mesh.position.y;
+  runtime.game.state = 'paused';
+  runtime.render(0); runtime.render(40); runtime.render(5000);
+  assert.ok(Math.abs(runtime.effects.twin - 9.7) < 1e-9);
+  assert.equal(runtime.capsules[0].mesh.position.y, capsuleY);
+  runtime.game.state = 'playing';
+  for (let frame = 0; frame < 192; frame++) runtime.update(.05); // 9.6 s
+  assert.ok(hasTwin(runtime.effects));
+  assert.equal(powerHud(runtime).twin[1], 'TWIN 1s');
+  const before = shots.length;
+  runtime.windowEvents.keydown({ key: ' ', preventDefault() {} });
+  runtime.update(.15); // expires in this frame, before firing
+  assert.equal(hasTwin(runtime.effects), false);
+  assert.equal(shots.length - before, 1);
+  assert.equal(shots.at(-1).position.x, player.x);
+  assert.deepEqual(powerHud(runtime), HUD_HIDDEN);
+});
+
+test('actual SHIELD blocks the next valid hit from a shot or a body, once, and not while invulnerable', () => {
+  // Enemy shot.
+  let { runtime } = powerGame();
+  collect(runtime, 'twin');
+  collect(runtime, 'shield');
+  assert.deepEqual(powerHud(runtime), { box: false, twin: [false, 'TWIN 10s'], shield: [false, 'SHIELD ×1'] });
+  runtime.player.invulnerable = 0;
+  const shooter = runtime.enemies[0];
+  shooter.mesh.position.set(0, PLAYER_Y + 2.4, COMBAT_Z);
+  runtime.fireEnemy(shooter);
+  for (let frame = 0; frame < 6; frame++) runtime.update(.05);
+  assert.equal(runtime.enemyShots.length, 0);
+  assert.equal(runtime.game.lives, 3);
+  assert.equal(runtime.effects.shield, false);
+  assert.ok(hasTwin(runtime.effects), 'TWIN survives the block');
+  assert.ok(runtime.player.invulnerable > 1.5, 'block grants the normal post-hit invulnerability');
+  assert.deepEqual(powerHud(runtime).shield, [true, '']);
+  runtime.player.invulnerable = 0;
+  shooter.mesh.position.set(0, PLAYER_Y + 2.4, COMBAT_Z);
+  runtime.fireEnemy(shooter);
+  for (let frame = 0; frame < 6; frame++) runtime.update(.05);
+  assert.equal(runtime.game.lives, 2, 'the next hit costs a life');
+
+  // Body collision, including a shot hitting in the same frame.
+  ({ runtime } = powerGame());
+  collect(runtime, 'shield');
+  runtime.player.invulnerable = 0;
+  const rammer = runtime.enemies[0];
+  rammer.mesh.position.copy(runtime.player.mesh.position);
+  runtime.fireEnemy(rammer);
+  runtime.enemyShots[0].previous = { x: 0, y: PLAYER_Y + 1, z: COMBAT_Z };
+  runtime.collisions();
+  assert.equal(rammer.alive, false);
+  assert.equal(runtime.game.lives, 3, 'shot and body in one frame: one block, no life lost');
+  assert.equal(runtime.effects.shield, false);
+
+  // Existing invulnerability is checked first and does not use the shield.
+  ({ runtime } = powerGame());
+  collect(runtime, 'shield');
+  runtime.player.invulnerable = 1;
+  runtime.enemies[0].mesh.position.copy(runtime.player.mesh.position);
+  runtime.collisions();
+  assert.equal(runtime.game.lives, 3);
+  assert.equal(runtime.effects.shield, true);
+});
+
+test('actual wave change keeps capsules and effects and advances the stage once', () => {
+  const { runtime } = powerGame();
+  runtime.player.invulnerable = 1000;
+  collect(runtime, 'twin');
+  collect(runtime, 'shield');
+  runtime.spawnCapsule('twin', { x: -10, y: 10 });
+  const capsule = runtime.capsules[0];
+  runtime.enemies.forEach(e => { e.alive = false; });
+  runtime.update(.05);
+  assert.equal(runtime.game.stage, 2);
+  for (let frame = 0; frame < 17; frame++) runtime.update(.05); // .85 s: still waiting
+  assert.equal(runtime.game.stage, 2, 'no stage increase per empty frame');
+  assert.equal(runtime.enemies.length, 0);
+  runtime.update(.05);
+  assert.equal(runtime.enemies.length, difficultyForStage(2).rows * 7);
+  assert.equal(runtime.game.stage, 2);
+  assert.equal(runtime.capsules.length, 1);
+  assert.equal(runtime.capsules[0], capsule);
+  assert.ok(runtime.scene.children.includes(capsule.mesh));
+  assert.equal(runtime.effects.shield, true);
+  assert.ok(hasTwin(runtime.effects));
+  // A pending wave from a previous game does not change a restarted one.
+  runtime.enemies.forEach(e => { e.alive = false; });
+  runtime.update(.05);
+  assert.equal(runtime.game.stage, 3);
+  runtime.startGame();
+  runtime.game.enemyFire = 1000;
+  const wave = [...runtime.enemies];
+  runtime.update(1);
+  assert.equal(runtime.game.stage, 1);
+  assert.equal(runtime.enemies.length, wave.length);
+  assert.ok(wave.every((enemy, i) => runtime.enemies[i] === enemy));
+});
+
+test('actual new game and game over clear effects, capsules, scene meshes and the HUD', () => {
+  let { runtime, rng } = powerGame();
+  collect(runtime, 'twin');
+  collect(runtime, 'shield');
+  runtime.spawnCapsule('shield', { x: -10, y: 5 });
+  const capsule = runtime.capsules[0];
+  runtime.startGame();
+  assert.deepEqual(runtime.effects, createEffects());
+  assert.equal(runtime.capsules.length, 0);
+  assert.equal(runtime.scene.children.includes(capsule.mesh), false);
+  assert.deepEqual(powerHud(runtime), HUD_HIDDEN);
+
+  // Game over in a frame that would also collect a capsule and score a dropping kill.
+  ({ runtime, rng } = powerGame());
+  collect(runtime, 'twin');
+  runtime.game.lives = 1;
+  runtime.player.invulnerable = 0;
+  runtime.player.x = 0;
+  const shooter = runtime.enemies[0];
+  shooter.mesh.position.set(0, PLAYER_Y + .5, COMBAT_Z);
+  runtime.fireEnemy(shooter);
+  runtime.spawnCapsule('shield', { x: 0, y: PLAYER_Y + 1.5 });
+  const late = runtime.capsules[0];
+  runtime.update(.05);
+  assert.equal(runtime.game.state, 'over');
+  assert.deepEqual(runtime.effects, createEffects());
+  assert.equal(runtime.capsules.length, 0);
+  assert.equal(runtime.scene.children.includes(late.mesh), false);
+  assert.deepEqual(powerHud(runtime), HUD_HIDDEN);
+  rng.value = .05;
+  runtime.destroyEnemy(runtime.enemies.find(e => e.alive));
+  assert.equal(runtime.capsules.length, 0, 'no drop after game over');
+  runtime.elements.get('#restartButton').listeners.click();
+  assert.equal(runtime.game.state, 'playing');
+  assert.equal(runtime.game.lives, 3);
+  assert.deepEqual(powerHud(runtime), HUD_HIDDEN);
+});
+
+test('power-up HUD is written only when its text changes', () => {
+  const { runtime } = powerGame();
+  runtime.player.invulnerable = 1000;
+  runtime.player.x = 13.5;
+  collect(runtime, 'twin');
+  const el = runtime.elements.get('#twinStatus');
+  let writes = 0, text = el.textContent;
+  Object.defineProperty(el, 'textContent', { get: () => text, set: value => { writes++; text = value; } });
+  for (let frame = 0; frame < 50; frame++) runtime.update(.01); // 10 s -> 9.5 s still shows 10s
+  assert.equal(writes, 0);
+  for (let frame = 0; frame < 60; frame++) runtime.update(.01); // crosses 9 s
+  assert.equal(writes, 1);
+  assert.equal(text, 'TWIN 9s');
 });
