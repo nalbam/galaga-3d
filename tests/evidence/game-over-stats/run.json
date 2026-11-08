@@ -1,0 +1,807 @@
+{
+  "startedAt": "2026-11-08T02:05:16.904Z",
+  "gitHead": "0eba3d70775f8aa55cee44992489f0108320eb8b",
+  "docsDirtyAgainstHead": true,
+  "sources": {
+    "docs/game.js": "ac7b72e34a7e357bf8aa8a0db9e542aa9562b30ab8df5a4351d095ac45876fb7",
+    "docs/combat.mjs": "b599028404709cdde16d9d62286e92bed06eec6e583e7850376418b83f3b013f",
+    "docs/index.html": "186822075a4363170b010f8d59c18bc26e0075d09562835cafab0898da43ba6d",
+    "docs/style.css": "1809d6f05b7dc01c3029700b1474eca13fe0dc145653c6143dc472ecba51c624",
+    "tests/browser/game-over-stats.mjs": "fffe9d82c3ca9b5392a055e666906997825ce28e59340dc05004a08d94737512"
+  },
+  "launchArgs": [
+    "--use-angle=swiftshader",
+    "--enable-unsafe-swiftshader"
+  ],
+  "command": "PLAYWRIGHT_PREFIX=~/pw node tests/browser/game-over-stats.mjs",
+  "url": "http://127.0.0.1:8767/index.html",
+  "frameMs": 16.666666666666668,
+  "console": [],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "requestFailures": [],
+  "steps": [
+    {
+      "name": "first-game-before-game-over",
+      "virtualMs": 8383,
+      "hud": {
+        "score": "000300",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "gameOver": false,
+        "finalScore": "000000",
+        "newHighScore": false
+      },
+      "stats": {
+        "stage": "01",
+        "basic": "0",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "0%",
+        "shots": "0/0"
+      },
+      "counted": {
+        "shots": 8,
+        "hits": 3,
+        "basic": 3,
+        "shotLog": [
+          {
+            "from": "x=0",
+            "hit": false
+          },
+          {
+            "from": "x=0",
+            "hit": true
+          },
+          {
+            "from": "x=0",
+            "hit": false
+          },
+          {
+            "from": "x=0",
+            "hit": true
+          },
+          {
+            "from": "x=0",
+            "hit": false
+          },
+          {
+            "from": "x=0",
+            "hit": true
+          },
+          {
+            "from": "x=13.5",
+            "hit": false
+          },
+          {
+            "from": "x=13.5",
+            "hit": false
+          }
+        ],
+        "gameOverFrames": 505,
+        "expected": {
+          "stage": "01",
+          "basic": "3",
+          "elite": "0",
+          "boss": "0",
+          "accuracy": "38%",
+          "shots": "3/8"
+        },
+        "shown": {
+          "stage": "01",
+          "basic": "3",
+          "elite": "0",
+          "boss": "0",
+          "accuracy": "38%",
+          "shots": "3/8"
+        }
+      }
+    },
+    {
+      "name": "first-game-over",
+      "virtualMs": 16833,
+      "hud": {
+        "score": "000300",
+        "stage": "01",
+        "lives": "···",
+        "gameOver": true,
+        "finalScore": "000300",
+        "newHighScore": true
+      },
+      "stats": {
+        "stage": "01",
+        "basic": "3",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "38%",
+        "shots": "3/8"
+      },
+      "expected": {
+        "stage": "01",
+        "basic": "3",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "38%",
+        "shots": "3/8"
+      }
+    },
+    {
+      "name": "restarted",
+      "virtualMs": 17833,
+      "hud": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "gameOver": false,
+        "finalScore": "000300",
+        "newHighScore": true
+      },
+      "stats": {
+        "stage": "01",
+        "basic": "3",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "38%",
+        "shots": "3/8"
+      }
+    },
+    {
+      "name": "second-game-over",
+      "virtualMs": 26283,
+      "hud": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "···",
+        "gameOver": true,
+        "finalScore": "000000",
+        "newHighScore": false
+      },
+      "stats": {
+        "stage": "01",
+        "basic": "0",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "0%",
+        "shots": "0/0"
+      },
+      "expected": {
+        "stage": "01",
+        "basic": "0",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "0%",
+        "shots": "0/0"
+      }
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "00-playing.png",
+      "note": "First game, stage 1, ship at x = 0",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "hud": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "gameOver": false,
+        "finalScore": "000000",
+        "newHighScore": false
+      },
+      "stats": {
+        "stage": "01",
+        "basic": "0",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "0%",
+        "shots": "0/0"
+      }
+    },
+    {
+      "file": "01-first-game-over.png",
+      "note": "First game over (desktop 800x900): statistics match the counted shots, hits and kills",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "hud": {
+        "score": "000300",
+        "stage": "01",
+        "lives": "···",
+        "gameOver": true,
+        "finalScore": "000300",
+        "newHighScore": true
+      },
+      "stats": {
+        "stage": "01",
+        "basic": "3",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "38%",
+        "shots": "3/8"
+      }
+    },
+    {
+      "file": "02-restarted.png",
+      "note": "Restarted: score 0, lives 3, stage 01",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "hud": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "gameOver": false,
+        "finalScore": "000300",
+        "newHighScore": true
+      },
+      "stats": {
+        "stage": "01",
+        "basic": "3",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "38%",
+        "shots": "3/8"
+      }
+    },
+    {
+      "file": "03-second-game-over.png",
+      "note": "Second game over without shots: kills 0, 0%, 0/0, stage 01",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "hud": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "···",
+        "gameOver": true,
+        "finalScore": "000000",
+        "newHighScore": false
+      },
+      "stats": {
+        "stage": "01",
+        "basic": "0",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "0%",
+        "shots": "0/0"
+      }
+    },
+    {
+      "file": "04-second-game-over-narrow.png",
+      "note": "Second game over on a narrow screen (390x844)",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "hud": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "···",
+        "gameOver": true,
+        "finalScore": "000000",
+        "newHighScore": false
+      },
+      "stats": {
+        "stage": "01",
+        "basic": "0",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "0%",
+        "shots": "0/0"
+      }
+    }
+  ],
+  "runs": [
+    {
+      "shots": 8,
+      "hits": 3,
+      "basic": 3,
+      "shotLog": [
+        {
+          "from": "x=0",
+          "hit": false
+        },
+        {
+          "from": "x=0",
+          "hit": true
+        },
+        {
+          "from": "x=0",
+          "hit": false
+        },
+        {
+          "from": "x=0",
+          "hit": true
+        },
+        {
+          "from": "x=0",
+          "hit": false
+        },
+        {
+          "from": "x=0",
+          "hit": true
+        },
+        {
+          "from": "x=13.5",
+          "hit": false
+        },
+        {
+          "from": "x=13.5",
+          "hit": false
+        }
+      ],
+      "gameOverFrames": 505,
+      "expected": {
+        "stage": "01",
+        "basic": "3",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "38%",
+        "shots": "3/8"
+      },
+      "shown": {
+        "stage": "01",
+        "basic": "3",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "38%",
+        "shots": "3/8"
+      }
+    },
+    {
+      "shots": 0,
+      "hits": 0,
+      "basic": 0,
+      "gameOverFrames": 505,
+      "expected": {
+        "stage": "01",
+        "basic": "0",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "0%",
+        "shots": "0/0"
+      },
+      "shown": {
+        "stage": "01",
+        "basic": "0",
+        "elite": "0",
+        "boss": "0",
+        "accuracy": "0%",
+        "shots": "0/0"
+      }
+    }
+  ],
+  "layouts": [
+    {
+      "name": "first-game-over-desktop",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "stage": {
+        "left": 24,
+        "top": 90,
+        "right": 776,
+        "bottom": 841,
+        "width": 752,
+        "height": 751
+      },
+      "overlay": {
+        "left": 24,
+        "top": 90,
+        "right": 776,
+        "bottom": 841,
+        "width": 752,
+        "height": 751
+      },
+      "title": {
+        "left": 285.609375,
+        "top": 270.5,
+        "right": 514.375,
+        "bottom": 324.5,
+        "width": 228.765625,
+        "height": 54
+      },
+      "finalScore": {
+        "left": 335.265625,
+        "top": 352.5,
+        "right": 464.734375,
+        "bottom": 418.5,
+        "width": 129.46875,
+        "height": 66
+      },
+      "newHighScore": {
+        "left": 292.859375,
+        "top": 450.5,
+        "right": 507.140625,
+        "bottom": 474.5,
+        "width": 214.28125,
+        "height": 24
+      },
+      "stats": {
+        "left": 230,
+        "top": 496.5,
+        "right": 570,
+        "bottom": 618.5,
+        "width": 340,
+        "height": 122
+      },
+      "statCells": [
+        {
+          "left": 247,
+          "top": 509.5,
+          "right": 392.984375,
+          "bottom": 552.5,
+          "width": 145.984375,
+          "height": 43
+        },
+        {
+          "left": 406.984375,
+          "top": 509.5,
+          "right": 552.984375,
+          "bottom": 552.5,
+          "width": 146,
+          "height": 43
+        },
+        {
+          "left": 247,
+          "top": 562.5,
+          "right": 339.65625,
+          "bottom": 605.5,
+          "width": 92.65625,
+          "height": 43
+        },
+        {
+          "left": 353.65625,
+          "top": 562.5,
+          "right": 446.328125,
+          "bottom": 605.5,
+          "width": 92.671875,
+          "height": 43
+        },
+        {
+          "left": 460.328125,
+          "top": 562.5,
+          "right": 552.984375,
+          "bottom": 605.5,
+          "width": 92.65625,
+          "height": 43
+        }
+      ],
+      "restart": {
+        "left": 310.671875,
+        "top": 640.5,
+        "right": 489.3125,
+        "bottom": 696.5,
+        "width": 178.640625,
+        "height": 56
+      },
+      "touchButtons": [
+        {
+          "left": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "left": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "left": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        }
+      ],
+      "touchControlsDisplay": "none",
+      "overlapsWithStats": [],
+      "statsInsideOverlay": true,
+      "restartInsideOverlay": true,
+      "statCellsInsideStats": true
+    },
+    {
+      "name": "second-game-over-desktop",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "stage": {
+        "left": 24,
+        "top": 90,
+        "right": 776,
+        "bottom": 841,
+        "width": 752,
+        "height": 751
+      },
+      "overlay": {
+        "left": 24,
+        "top": 90,
+        "right": 776,
+        "bottom": 841,
+        "width": 752,
+        "height": 751
+      },
+      "title": {
+        "left": 285.609375,
+        "top": 298.5,
+        "right": 514.375,
+        "bottom": 352.5,
+        "width": 228.765625,
+        "height": 54
+      },
+      "finalScore": {
+        "left": 335.265625,
+        "top": 380.5,
+        "right": 464.734375,
+        "bottom": 446.5,
+        "width": 129.46875,
+        "height": 66
+      },
+      "newHighScore": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "stats": {
+        "left": 230,
+        "top": 468.5,
+        "right": 570,
+        "bottom": 590.5,
+        "width": 340,
+        "height": 122
+      },
+      "statCells": [
+        {
+          "left": 247,
+          "top": 481.5,
+          "right": 392.984375,
+          "bottom": 524.5,
+          "width": 145.984375,
+          "height": 43
+        },
+        {
+          "left": 406.984375,
+          "top": 481.5,
+          "right": 552.984375,
+          "bottom": 524.5,
+          "width": 146,
+          "height": 43
+        },
+        {
+          "left": 247,
+          "top": 534.5,
+          "right": 339.65625,
+          "bottom": 577.5,
+          "width": 92.65625,
+          "height": 43
+        },
+        {
+          "left": 353.65625,
+          "top": 534.5,
+          "right": 446.328125,
+          "bottom": 577.5,
+          "width": 92.671875,
+          "height": 43
+        },
+        {
+          "left": 460.328125,
+          "top": 534.5,
+          "right": 552.984375,
+          "bottom": 577.5,
+          "width": 92.65625,
+          "height": 43
+        }
+      ],
+      "restart": {
+        "left": 310.671875,
+        "top": 612.5,
+        "right": 489.3125,
+        "bottom": 668.5,
+        "width": 178.640625,
+        "height": 56
+      },
+      "touchButtons": [
+        {
+          "left": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "left": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "left": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        }
+      ],
+      "touchControlsDisplay": "none",
+      "overlapsWithStats": [],
+      "statsInsideOverlay": true,
+      "restartInsideOverlay": true,
+      "statCellsInsideStats": true
+    },
+    {
+      "name": "second-game-over-narrow",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "stage": {
+        "left": 11,
+        "top": 61,
+        "right": 379,
+        "bottom": 807,
+        "width": 368,
+        "height": 746
+      },
+      "overlay": {
+        "left": 11,
+        "top": 61,
+        "right": 379,
+        "bottom": 807,
+        "width": 368,
+        "height": 746
+      },
+      "title": {
+        "left": 123.5,
+        "top": 291.125,
+        "right": 266.484375,
+        "bottom": 324.875,
+        "width": 142.984375,
+        "height": 33.75
+      },
+      "finalScore": {
+        "left": 130.265625,
+        "top": 346.875,
+        "right": 259.734375,
+        "bottom": 412.875,
+        "width": 129.46875,
+        "height": 66
+      },
+      "newHighScore": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "stats": {
+        "left": 36.765625,
+        "top": 434.875,
+        "right": 353.234375,
+        "bottom": 538.875,
+        "width": 316.46875,
+        "height": 104
+      },
+      "statCells": [
+        {
+          "left": 49.765625,
+          "top": 445.875,
+          "right": 190,
+          "bottom": 483.875,
+          "width": 140.234375,
+          "height": 38
+        },
+        {
+          "left": 200,
+          "top": 445.875,
+          "right": 340.234375,
+          "bottom": 483.875,
+          "width": 140.234375,
+          "height": 38
+        },
+        {
+          "left": 49.765625,
+          "top": 489.875,
+          "right": 139.921875,
+          "bottom": 527.875,
+          "width": 90.15625,
+          "height": 38
+        },
+        {
+          "left": 149.921875,
+          "top": 489.875,
+          "right": 240.078125,
+          "bottom": 527.875,
+          "width": 90.15625,
+          "height": 38
+        },
+        {
+          "left": 250.078125,
+          "top": 489.875,
+          "right": 340.234375,
+          "bottom": 527.875,
+          "width": 90.15625,
+          "height": 38
+        }
+      ],
+      "restart": {
+        "left": 105.671875,
+        "top": 554.875,
+        "right": 284.3125,
+        "bottom": 610.875,
+        "width": 178.640625,
+        "height": 56
+      },
+      "touchButtons": [
+        {
+          "left": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "left": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "left": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        }
+      ],
+      "touchControlsDisplay": "none",
+      "overlapsWithStats": [],
+      "statsInsideOverlay": true,
+      "restartInsideOverlay": true,
+      "statCellsInsideStats": true
+    }
+  ],
+  "browserVersion": "158.0.8127.18",
+  "threeModule": {
+    "url": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "status": 200
+  },
+  "finishedAt": "2026-11-08T02:05:46.152Z",
+  "wallMs": 29248,
+  "note": "CPU (SwiftShader) rendering with a virtual frame clock; wall times are not device performance.",
+  "failures": [],
+  "passed": true,
+  "exitCode": 0,
+  "files": [
+    "00-playing.png",
+    "01-first-game-over.png",
+    "02-restarted.png",
+    "03-second-game-over.png",
+    "04-second-game-over-narrow.png"
+  ]
+}

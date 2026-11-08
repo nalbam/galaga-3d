@@ -138,3 +138,45 @@ export function powerupHudText(effects) {
     shield: effects.shield ? 'SHIELD ×1' : '',
   };
 }
+
+// Run statistics for the game-over screen. Like the power-up effects they are plain values:
+// every function returns a new state and never changes its input.
+// Shots count each player bolt created (TWIN fires two); a hit counts each bolt that struck an
+// enemy (non-lethal hits included, at most once per bolt); kills count lethal hits by enemy type.
+export const KILL_TYPES = Object.freeze(['basic', 'elite', 'boss']);
+
+export function createRunStats() {
+  return { shotsFired: 0, shotsHit: 0, kills: { basic: 0, elite: 0, boss: 0 } };
+}
+
+export function recordShotsFired(stats, count = 1) {
+  if (!Number.isInteger(count) || count < 0) throw new Error(`invalid shot count: ${count}`);
+  return { ...stats, kills: { ...stats.kills }, shotsFired: stats.shotsFired + count };
+}
+
+export function recordShotHit(stats) {
+  return { ...stats, kills: { ...stats.kills }, shotsHit: stats.shotsHit + 1 };
+}
+
+export function recordKill(stats, type) {
+  if (!KILL_TYPES.includes(type)) throw new Error(`unknown enemy type: ${type}`);
+  return { ...stats, kills: { ...stats.kills, [type]: stats.kills[type] + 1 } };
+}
+
+// Whole percent of fired shots that hit, rounded; 0 when nothing was fired. Never above 100.
+export function accuracyPercent(stats) {
+  if (!(stats.shotsFired > 0)) return 0;
+  return Math.min(100, Math.round(stats.shotsHit / stats.shotsFired * 100));
+}
+
+// Text for the game-over statistics block.
+export function runStatsText(stats, stage) {
+  return {
+    stage: String(Math.max(1, Math.floor(stage) || 1)).padStart(2, '0'),
+    basic: String(stats.kills.basic),
+    elite: String(stats.kills.elite),
+    boss: String(stats.kills.boss),
+    accuracy: `${accuracyPercent(stats)}%`,
+    shots: `${stats.shotsHit}/${stats.shotsFired}`,
+  };
+}
