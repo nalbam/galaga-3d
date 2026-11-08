@@ -1,9 +1,9 @@
 {
-  "startedAt": "2026-11-08T02:05:16.904Z",
-  "gitHead": "0eba3d70775f8aa55cee44992489f0108320eb8b",
+  "startedAt": "2026-11-08T06:15:00.807Z",
+  "gitHead": "c7bd59376c7fed804006bee0d4d4cd72495b8f63",
   "docsDirtyAgainstHead": true,
   "sources": {
-    "docs/game.js": "ac7b72e34a7e357bf8aa8a0db9e542aa9562b30ab8df5a4351d095ac45876fb7",
+    "docs/game.js": "437093c0dbb5ca2bee17fb348f101dda968d262a7fb06f09ba03f21d5056d784",
     "docs/combat.mjs": "b599028404709cdde16d9d62286e92bed06eec6e583e7850376418b83f3b013f",
     "docs/index.html": "186822075a4363170b010f8d59c18bc26e0075d09562835cafab0898da43ba6d",
     "docs/style.css": "1809d6f05b7dc01c3029700b1474eca13fe0dc145653c6143dc472ecba51c624",
@@ -788,11 +788,11 @@
   ],
   "browserVersion": "158.0.8127.18",
   "threeModule": {
-    "url": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "url": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js",
     "status": 200
   },
-  "finishedAt": "2026-11-08T02:05:46.152Z",
-  "wallMs": 29248,
+  "finishedAt": "2026-11-08T06:15:30.310Z",
+  "wallMs": 29503,
   "note": "CPU (SwiftShader) rendering with a virtual frame clock; wall times are not device performance.",
   "failures": [],
   "passed": true,

@@ -10,7 +10,9 @@ Because browsers restrict ES-module imports from `file://`, serve the repository
 python3 -m http.server 8000
 ```
 
-Open <http://localhost:8000/docs/>. The only runtime dependency is Three.js loaded from the jsDelivr CDN.
+Open <http://localhost:8000/docs/>. The only runtime dependency is Three.js 0.187.0, loaded from the jsDelivr CDN (`https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js`, which also loads `three.core.js` from the same folder). The page needs network access to jsDelivr.
+
+Three.js 0.187.0 supports only WebGL 2 (WebGL 1 was removed in r163). Current desktop and mobile browsers support WebGL 2. Without it, the renderer cannot be created: the start screen text appears, but the canvas stays empty and the game does not start.
 
 ## Controls
 
@@ -100,3 +102,16 @@ PLAYWRIGHT_PREFIX=~/pw node tests/browser/game-over-stats.mjs
 The test page sets `Math.random` to `.99` (no dives, random fire or drops) while the ship fires and to `0` (enemies dive and fire) to reach game over. The script counts the expected values itself: each real Space press is one shot, and on stage 1 (basic enemies with 1 health) each +100 score is one hit and one basic kill. It fires from x = 0 until three kills, moves to the right edge with the real ArrowRight key and fires two shots that miss, then checks that the game-over screen shows exactly the counted stage, kills and accuracy, and that holding Space after game over changes nothing. After **RESTART** it reaches game over again without firing and checks stage `01`, kills `0` and `0%` (`0/0`). On desktop (800x900) and narrow (390x844) screens it checks that the statistics block stays inside the overlay, above RESTART and does not overlap the title, final score, new-record line, RESTART or the touch buttons (the touch buttons are hidden while an overlay is shown). It exits with a non-zero status on any failed check, `console.error` or page error.
 
 Evidence is in `tests/evidence/game-over-stats/`: full-page PNGs (`00-playing.png` to `04-second-game-over-narrow.png`) and `run.json` with the HUD and statistics text per step, the counted and shown statistics per game, the layout boxes, console and page errors, failed requests, the Three.js module status, `gitHead` and the SHA-256 of the checked sources. `gitHead` is the commit the run started from; compare the hashes with `sha256sum docs/*` to confirm that the evidence matches the source.
+
+### Browser check: Three.js upgrade comparison
+
+`tests/browser/three-upgrade-compare.mjs` runs the game twice in the same headless Chromium (SwiftShader): once with `docs/game.js` from a git revision (the "before" code) and once with the working tree `docs/game.js` (the "after" code). It compares the screens. The script contains no Three.js version; the Three.js URL comes from the import in each `game.js`.
+
+```bash
+PLAYWRIGHT_PREFIX=~/pw node tests/browser/three-upgrade-compare.mjs          # before = c7bd593 (Three.js 0.160.0)
+PLAYWRIGHT_PREFIX=~/pw node tests/browser/three-upgrade-compare.mjs <rev>    # or BASE_REV=<rev>
+```
+
+Both runs use port `8768` (change it with `PORT`), an 800x900 viewport with deviceScaleFactor 1, a seeded `Math.random`, a virtual 60 Hz `requestAnimationFrame` clock and the same input sequence. The test page replaces only the body of the `game.js` response. It takes three screenshots: the start screen, the playing screen (START MISSION, 30 frames, Space held for 40 frames, 20 frames) and the game-over screen (`Math.random` fixed to `0` until game over). `Math.random` calls from the Three.js modules (UUID generation) are counted apart, so the game's random sequence does not depend on the Three.js version. Screenshots use Playwright `animations: 'disabled'`, because the CSS animations run on the wall clock. For each screen pair it records the per-channel means, mean luminance, mean absolute difference and the share of pixels with a channel difference above 16, and saves an amplified diff image. A pair is "noticeable" when a mean differs by more than 2 (of 255) or more than 1% of pixels change. The script exits with a non-zero status on a `console.error` or page error in the "after" run, a Three.js module response other than 200, or a failed step. Warnings that only the "after" run has are listed in `newWarningsAfter`.
+
+Evidence is in `tests/evidence/three-upgrade/`: `before-*.png`, `after-*.png`, `diff-*.png` and `run.json` (git HEAD, base revision, SHA-256 of both `game.js` versions, browser version, console messages, page errors, failed requests, loaded Three.js module URLs and statuses, and the measurements). `release-notes.md` holds the analysis of the Three.js r161–r187 release notes and Migration Guide for the APIs the game uses.

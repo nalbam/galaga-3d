@@ -1,4 +1,4 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js';
 import { COMBAT_Z, PLAYER_Y, beginDive, enemyPosition, formationPosition, createProjectile, advanceProjectile, projectileHits, difficultyForStage, WAVE_COLUMNS, pointerToWorldX, rollPowerupDrop, createEffects, applyPowerup, advanceEffects, hasTwin, absorbHit, powerupHudText, POWERUP_FALL_SPEED, POWERUP_PICKUP_RADIUS, POWERUP_BOTTOM_Y, createRunStats, recordShotsFired, recordShotHit, recordKill, runStatsText } from './combat.mjs';
 
 // NEON SWARM: a self-contained arcade loop. World units are intentionally small;

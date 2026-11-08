@@ -1,11 +1,11 @@
 {
-  "startedAt": "2026-11-06T15:43:44.096Z",
-  "gitHead": "53277620b2b7f4b9fccbb7c7539ed1ae1f89648a",
+  "startedAt": "2026-11-08T06:13:48.092Z",
+  "gitHead": "c7bd59376c7fed804006bee0d4d4cd72495b8f63",
   "sources": {
-    "docs/game.js": "137b7cd8e04a0a7f31e32f460feda494c239e70c4d59c6646ea74a7316f768fb",
-    "docs/combat.mjs": "a7504402b886cc185d734645457ac7529d1dec10bdb5574b6bdf6884294f2832",
-    "docs/index.html": "b80d1cc93baadf89f0b93b110b6a17d530267bd0e1b21ded5bd7eceb188149d2",
-    "docs/style.css": "b7b9f07fdd0a799aaab9cff3b183ea9ab9475d2f86c61eec968eaa1d944aabd8",
+    "docs/game.js": "437093c0dbb5ca2bee17fb348f101dda968d262a7fb06f09ba03f21d5056d784",
+    "docs/combat.mjs": "b599028404709cdde16d9d62286e92bed06eec6e583e7850376418b83f3b013f",
+    "docs/index.html": "186822075a4363170b010f8d59c18bc26e0075d09562835cafab0898da43ba6d",
+    "docs/style.css": "1809d6f05b7dc01c3029700b1474eca13fe0dc145653c6143dc472ecba51c624",
     "tests/browser/particle-damping.mjs": "e549395583dd6c156de0ae7a69d65b7c8a9bc514fbd42c9f3d1a005101b3d5fc"
   },
   "launchArgs": [
@@ -23,7 +23,7 @@
       "file": "00-start-screen.png",
       "note": "Start overlay before input",
       "virtualMs": 83.333,
-      "wallMs": 3417,
+      "wallMs": 7219,
       "hud": {
         "score": "000000",
         "highScore": "000000",
@@ -35,7 +35,7 @@
       "file": "01-playing.png",
       "note": "After clicking START MISSION (0.5 s at 60 Hz)",
       "virtualMs": 583.333,
-      "wallMs": 4031,
+      "wallMs": 9001,
       "hud": {
         "score": "000000",
         "highScore": "000000",
@@ -47,7 +47,7 @@
       "file": "02-hit.png",
       "note": "Same explosion, 0 frames (0.00 s) after the hit frame",
       "virtualMs": 1916.667,
-      "wallMs": 10776,
+      "wallMs": 25109,
       "hud": {
         "score": "000100",
         "highScore": "000100",
@@ -60,7 +60,7 @@
       "file": "03-spread-0.10s.png",
       "note": "Same explosion, 6 frames (0.10 s) after the hit frame",
       "virtualMs": 2016.667,
-      "wallMs": 11129,
+      "wallMs": 26015,
       "hud": {
         "score": "000100",
         "highScore": "000100",
@@ -73,7 +73,7 @@
       "file": "04-spread-0.25s.png",
       "note": "Same explosion, 15 frames (0.25 s) after the hit frame",
       "virtualMs": 2166.667,
-      "wallMs": 11511,
+      "wallMs": 27196,
       "hud": {
         "score": "000100",
         "highScore": "000100",
@@ -86,7 +86,7 @@
       "file": "05-spread-0.45s.png",
       "note": "Same explosion, 27 frames (0.45 s) after the hit frame",
       "virtualMs": 2366.667,
-      "wallMs": 11925,
+      "wallMs": 28300,
       "hud": {
         "score": "000100",
         "highScore": "000100",
@@ -99,7 +99,7 @@
       "file": "06-fade-0.70s.png",
       "note": "Same explosion, 42 frames (0.70 s) after the hit frame",
       "virtualMs": 2616.667,
-      "wallMs": 12336,
+      "wallMs": 29601,
       "hud": {
         "score": "000100",
         "highScore": "000100",
@@ -112,7 +112,7 @@
       "file": "07-gone-1.00s.png",
       "note": "Same explosion, 60 frames (1.00 s) after the hit frame",
       "virtualMs": 2916.667,
-      "wallMs": 12884,
+      "wallMs": 31001,
       "hud": {
         "score": "000100",
         "highScore": "000100",
@@ -124,7 +124,7 @@
   ],
   "browserVersion": "158.0.8127.18",
   "threeModule": {
-    "url": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "url": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js",
     "status": 200
   },
   "canvas": {
@@ -137,41 +137,41 @@
     "attempt": 1,
     "framesAfterShot": 18,
     "score": "000100",
-    "x": 364,
-    "y": 324,
-    "changedPixelsInBlock": 612
+    "x": 356,
+    "y": 316,
+    "changedPixelsInBlock": 842
   },
   "particleSeries": {
     "hitPoint": {
-      "x": 364,
-      "y": 324
+      "x": 356,
+      "y": 316
     },
     "boxRadiusPx": 32,
     "series": [
       {
         "secondsAfterHit": 0,
-        "pinkPixels": 6,
-        "maxDistancePx": 14.1
+        "pinkPixels": 0,
+        "maxDistancePx": 0
       },
       {
         "secondsAfterHit": 0.1,
-        "pinkPixels": 55,
-        "maxDistancePx": 19.8
+        "pinkPixels": 40,
+        "maxDistancePx": 12.8
       },
       {
         "secondsAfterHit": 0.25,
-        "pinkPixels": 67,
-        "maxDistancePx": 25.5
+        "pinkPixels": 57,
+        "maxDistancePx": 19.8
       },
       {
         "secondsAfterHit": 0.45,
-        "pinkPixels": 49,
-        "maxDistancePx": 27.2
+        "pinkPixels": 46,
+        "maxDistancePx": 22.6
       },
       {
         "secondsAfterHit": 0.7,
-        "pinkPixels": 20,
-        "maxDistancePx": 27.3
+        "pinkPixels": 17,
+        "maxDistancePx": 21.6
       },
       {
         "secondsAfterHit": 1,
@@ -180,8 +180,8 @@
       }
     ]
   },
-  "finishedAt": "2026-11-06T15:43:57.088Z",
-  "wallMs": 12992,
+  "finishedAt": "2026-11-08T06:14:19.398Z",
+  "wallMs": 31305,
   "note": "CPU (SwiftShader) rendering with a virtual frame clock; wall times are not device performance.",
   "failures": [],
   "passed": true,

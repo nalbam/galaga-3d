@@ -1,0 +1,373 @@
+{
+  "startedAt": "2026-11-08T06:13:19.451Z",
+  "gitHead": "c7bd59376c7fed804006bee0d4d4cd72495b8f63",
+  "docsDirtyAgainstHead": true,
+  "baseRev": "c7bd593",
+  "baseCommit": "c7bd59376c7fed804006bee0d4d4cd72495b8f63",
+  "launchArgs": [
+    "--use-angle=swiftshader",
+    "--enable-unsafe-swiftshader"
+  ],
+  "url": "http://127.0.0.1:8768/index.html",
+  "viewport": {
+    "width": 800,
+    "height": 900
+  },
+  "deviceScaleFactor": 1,
+  "frameMs": 16.666666666666668,
+  "seed": 20261108,
+  "diffThreshold": 16,
+  "noticeable": {
+    "meanDelta": 2,
+    "changedShare": 0.01
+  },
+  "command": "PLAYWRIGHT_PREFIX=~/pw node tests/browser/three-upgrade-compare.mjs",
+  "sources": {
+    "before": {
+      "from": "git show c7bd59376c7fed804006bee0d4d4cd72495b8f63:docs/game.js",
+      "sha256": "ac7b72e34a7e357bf8aa8a0db9e542aa9562b30ab8df5a4351d095ac45876fb7",
+      "threeImport": "import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';"
+    },
+    "after": {
+      "from": "working tree docs/game.js",
+      "sha256": "437093c0dbb5ca2bee17fb348f101dda968d262a7fb06f09ba03f21d5056d784",
+      "threeImport": "import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js';"
+    },
+    "docs/combat.mjs": "b599028404709cdde16d9d62286e92bed06eec6e583e7850376418b83f3b013f",
+    "docs/index.html": "186822075a4363170b010f8d59c18bc26e0075d09562835cafab0898da43ba6d",
+    "docs/style.css": "1809d6f05b7dc01c3029700b1474eca13fe0dc145653c6143dc472ecba51c624",
+    "tests/browser/three-upgrade-compare.mjs": "7ed786ebf6d78b55c44059348310a5608c3c7b8980181d546f8dcc7a6df00e70"
+  },
+  "runs": {
+    "before": {
+      "label": "before",
+      "console": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "requestFailures": [],
+      "threeModules": [
+        {
+          "url": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+          "status": 200
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "start",
+          "file": "before-00-start.png",
+          "note": "Start screen, 5 frames after load",
+          "virtualMs": 83,
+          "randomCalls": 1260,
+          "threeRandomCalls": 220,
+          "hud": {
+            "score": "000000",
+            "stage": "01",
+            "lives": "♥♥♥",
+            "gameOver": false
+          }
+        },
+        {
+          "name": "playing",
+          "file": "before-01-playing.png",
+          "note": "START MISSION clicked, 30 frames, Space held 40 frames, 20 frames",
+          "virtualMs": 1583,
+          "randomCalls": 3213,
+          "threeRandomCalls": 1016,
+          "hud": {
+            "score": "000100",
+            "stage": "01",
+            "lives": "♥♥♥",
+            "gameOver": false
+          }
+        },
+        {
+          "name": "game-over",
+          "file": "before-02-game-over.png",
+          "note": "Math.random fixed to 0 until game over, then 2 frames",
+          "virtualMs": 10033,
+          "randomCalls": 4087,
+          "threeRandomCalls": 2216,
+          "hud": {
+            "score": "000100",
+            "stage": "01",
+            "lives": "···",
+            "gameOver": true
+          }
+        }
+      ],
+      "gameOverFrames": 505
+    },
+    "after": {
+      "label": "after",
+      "console": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "requestFailures": [],
+      "threeModules": [
+        {
+          "url": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.core.js",
+          "status": 200
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "start",
+          "file": "after-00-start.png",
+          "note": "Start screen, 5 frames after load",
+          "virtualMs": 83,
+          "randomCalls": 1260,
+          "threeRandomCalls": 232,
+          "hud": {
+            "score": "000000",
+            "stage": "01",
+            "lives": "♥♥♥",
+            "gameOver": false
+          }
+        },
+        {
+          "name": "playing",
+          "file": "after-01-playing.png",
+          "note": "START MISSION clicked, 30 frames, Space held 40 frames, 20 frames",
+          "virtualMs": 1583,
+          "randomCalls": 3213,
+          "threeRandomCalls": 1028,
+          "hud": {
+            "score": "000100",
+            "stage": "01",
+            "lives": "♥♥♥",
+            "gameOver": false
+          }
+        },
+        {
+          "name": "game-over",
+          "file": "after-02-game-over.png",
+          "note": "Math.random fixed to 0 until game over, then 2 frames",
+          "virtualMs": 10033,
+          "randomCalls": 4087,
+          "threeRandomCalls": 2228,
+          "hud": {
+            "score": "000100",
+            "stage": "01",
+            "lives": "···",
+            "gameOver": true
+          }
+        }
+      ],
+      "gameOverFrames": 505
+    }
+  },
+  "comparisons": [
+    {
+      "name": "00-start",
+      "before": {
+        "channelMeanRGB": [
+          10.527,
+          16.173,
+          33.642
+        ],
+        "meanLuminance": 16.234
+      },
+      "after": {
+        "channelMeanRGB": [
+          10.527,
+          16.173,
+          33.642
+        ],
+        "meanLuminance": 16.234
+      },
+      "diff": "diff-00-start.png",
+      "size": {
+        "width": 800,
+        "height": 900,
+        "beforeSize": [
+          800,
+          900
+        ],
+        "afterSize": [
+          800,
+          900
+        ]
+      },
+      "meanAbsDiffRGB": [
+        0,
+        0,
+        0
+      ],
+      "maxChannelDiff": 0,
+      "changedPixels": 0,
+      "changedShare": 0,
+      "meanLuminanceDelta": 0,
+      "channelMeanDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "noticeable": false,
+      "randomCallsBefore": 1260,
+      "randomCallsAfter": 1260,
+      "sameRandomSequence": true,
+      "hudBefore": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "gameOver": false
+      },
+      "hudAfter": {
+        "score": "000000",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "gameOver": false
+      }
+    },
+    {
+      "name": "01-playing",
+      "before": {
+        "channelMeanRGB": [
+          13.99,
+          16.07,
+          31.933
+        ],
+        "meanLuminance": 16.773
+      },
+      "after": {
+        "channelMeanRGB": [
+          13.99,
+          16.07,
+          31.933
+        ],
+        "meanLuminance": 16.773
+      },
+      "diff": "diff-01-playing.png",
+      "size": {
+        "width": 800,
+        "height": 900,
+        "beforeSize": [
+          800,
+          900
+        ],
+        "afterSize": [
+          800,
+          900
+        ]
+      },
+      "meanAbsDiffRGB": [
+        0,
+        0,
+        0
+      ],
+      "maxChannelDiff": 0,
+      "changedPixels": 0,
+      "changedShare": 0,
+      "meanLuminanceDelta": 0,
+      "channelMeanDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "noticeable": false,
+      "randomCallsBefore": 3213,
+      "randomCallsAfter": 3213,
+      "sameRandomSequence": true,
+      "hudBefore": {
+        "score": "000100",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "gameOver": false
+      },
+      "hudAfter": {
+        "score": "000100",
+        "stage": "01",
+        "lives": "♥♥♥",
+        "gameOver": false
+      }
+    },
+    {
+      "name": "02-game-over",
+      "before": {
+        "channelMeanRGB": [
+          10.07,
+          14.299,
+          31.937
+        ],
+        "meanLuminance": 14.673
+      },
+      "after": {
+        "channelMeanRGB": [
+          10.07,
+          14.299,
+          31.937
+        ],
+        "meanLuminance": 14.673
+      },
+      "diff": "diff-02-game-over.png",
+      "size": {
+        "width": 800,
+        "height": 900,
+        "beforeSize": [
+          800,
+          900
+        ],
+        "afterSize": [
+          800,
+          900
+        ]
+      },
+      "meanAbsDiffRGB": [
+        0,
+        0,
+        0
+      ],
+      "maxChannelDiff": 0,
+      "changedPixels": 0,
+      "changedShare": 0,
+      "meanLuminanceDelta": 0,
+      "channelMeanDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "noticeable": false,
+      "randomCallsBefore": 4087,
+      "randomCallsAfter": 4087,
+      "sameRandomSequence": true,
+      "hudBefore": {
+        "score": "000100",
+        "stage": "01",
+        "lives": "···",
+        "gameOver": true
+      },
+      "hudAfter": {
+        "score": "000100",
+        "stage": "01",
+        "lives": "···",
+        "gameOver": true
+      }
+    }
+  ],
+  "browserVersion": "158.0.8127.18",
+  "newWarningsAfter": [],
+  "anyNoticeableDifference": false,
+  "finishedAt": "2026-11-08T06:13:43.995Z",
+  "wallMs": 24544,
+  "note": "CPU (SwiftShader) rendering with a virtual frame clock; no device performance or frame rate is measured.",
+  "failures": [],
+  "passed": true,
+  "exitCode": 0,
+  "files": [
+    "after-00-start.png",
+    "after-01-playing.png",
+    "after-02-game-over.png",
+    "before-00-start.png",
+    "before-01-playing.png",
+    "before-02-game-over.png",
+    "diff-00-start.png",
+    "diff-01-playing.png",
+    "diff-02-game-over.png"
+  ]
+}

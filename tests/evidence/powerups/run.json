@@ -1,12 +1,12 @@
 {
-  "startedAt": "2026-11-07T12:23:48.446Z",
-  "gitHead": "71498d22b14973a77bd8a5a28eb5265ab6e95fed",
+  "startedAt": "2026-11-08T06:15:30.633Z",
+  "gitHead": "c7bd59376c7fed804006bee0d4d4cd72495b8f63",
   "docsDirtyAgainstHead": true,
   "sources": {
-    "docs/game.js": "3000a8ecae5ceff30ba6da84f0957aaefc007589c0cd571f8f7a8a59d49fea00",
-    "docs/combat.mjs": "31ba415739fd38cd147eb562795e5605c705bf5c979e8f0776166cc16dd19da2",
-    "docs/index.html": "a9830318cf71272fe1acfd9f86d361392fd2781785d3fa545cd371e7c32bb1ed",
-    "docs/style.css": "80f6eaf08c923175362445c331cce60d4b497343b0aa7ba018f01f559360182a",
+    "docs/game.js": "437093c0dbb5ca2bee17fb348f101dda968d262a7fb06f09ba03f21d5056d784",
+    "docs/combat.mjs": "b599028404709cdde16d9d62286e92bed06eec6e583e7850376418b83f3b013f",
+    "docs/index.html": "186822075a4363170b010f8d59c18bc26e0075d09562835cafab0898da43ba6d",
+    "docs/style.css": "1809d6f05b7dc01c3029700b1474eca13fe0dc145653c6143dc472ecba51c624",
     "tests/browser/powerups.mjs": "9e772dc987d8581efa1f4a4f0861663531d54b483c1b21480a3bfaf1f0bdf795"
   },
   "launchArgs": [
@@ -38,12 +38,12 @@
           375
         ],
         "perFrame": [
-          0,
-          0,
-          0,
           1,
-          1,
-          1
+          0,
+          0,
+          0,
+          0,
+          0
         ]
       }
     },
@@ -82,11 +82,11 @@
           385
         ],
         "perFrame": [
+          0,
+          0,
           2,
           2,
-          2,
-          2,
-          2,
+          0,
           2
         ]
       }
@@ -123,7 +123,7 @@
         "perFrame": [
           1,
           1,
-          0,
+          1,
           0,
           0,
           0
@@ -218,8 +218,8 @@
           1,
           1,
           1,
-          0,
-          0,
+          1,
+          1,
           0
         ]
       }
@@ -389,7 +389,7 @@
   ],
   "browserVersion": "158.0.8127.18",
   "threeModule": {
-    "url": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "url": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js",
     "status": 200
   },
   "twinPlaySeconds": 10.02,
@@ -448,8 +448,8 @@
     ],
     "buttonsShown": "flex"
   },
-  "finishedAt": "2026-11-07T12:24:30.489Z",
-  "wallMs": 42043,
+  "finishedAt": "2026-11-08T06:16:14.285Z",
+  "wallMs": 43652,
   "note": "CPU (SwiftShader) rendering with a virtual frame clock; wall times are not device performance.",
   "failures": [],
   "passed": true,
