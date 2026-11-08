@@ -129,9 +129,9 @@ function loadGame(random = .99) {
   });
   const source = readFileSync(new URL('../docs/game.js', import.meta.url), 'utf8');
   vm.runInContext(source.replace(/^import .*;\n/gm, ''), context);
-  const runtime = vm.runInContext('({ game, player, enemies, shots, enemyShots, particles, capsules, scene, camera, startGame, createWave, firePlayer, fireEnemy, explode, update, collisions, resize, destroyEnemy, loseLife, spawnCapsule, render, get effects() { return effects; } })', context);
+  const runtime = vm.runInContext('({ game, player, enemies, shots, enemyShots, particles, capsules, scene, camera, startGame, createWave, firePlayer, fireEnemy, explode, update, collisions, resize, destroyEnemy, loseLife, spawnCapsule, render, get effects() { return effects; }, get runStats() { return runStats; } })', context);
   runtime.game.muted = true;
-  return Object.assign(runtime, { elements, windowEvents }); // keeps the live `effects` getter
+  return Object.assign(runtime, { elements, windowEvents }); // keeps the live `effects` and `runStats` getters
 }
 
 test('actual waves, player, boss and portrait camera use a visible shared plane', () => {
@@ -786,4 +786,137 @@ test('power-up HUD is written only when its text changes', () => {
   for (let frame = 0; frame < 60; frame++) runtime.update(.01); // crosses 9 s
   assert.equal(writes, 1);
   assert.equal(text, 'TWIN 9s');
+});
+
+// Run statistics shown on the game-over screen.
+const { createRunStats, recordShotsFired, recordShotHit, recordKill, accuracyPercent, runStatsText } = combat;
+const deepFreeze = value => { Object.values(value).forEach(v => { if (v && typeof v === 'object') deepFreeze(v); }); return Object.freeze(value); };
+const statsOf = (fired, hit, kills = {}) => ({ shotsFired: fired, shotsHit: hit, kills: { basic: 0, elite: 0, boss: 0, ...kills } });
+
+test('run stats: count shots, hits and kills by type without mutating the input', () => {
+  const empty = deepFreeze(createRunStats());
+  assert.deepEqual(empty, statsOf(0, 0));
+  assert.notEqual(createRunStats(), createRunStats());
+  let stats = recordShotsFired(empty, 2);
+  stats = recordShotsFired(deepFreeze(stats), 1);
+  stats = recordShotHit(deepFreeze(stats));
+  for (const type of ['basic', 'basic', 'elite', 'boss']) stats = recordKill(deepFreeze(stats), type);
+  assert.deepEqual(stats, statsOf(3, 1, { basic: 2, elite: 1, boss: 1 }));
+  assert.deepEqual(empty, statsOf(0, 0), 'input unchanged');
+  assert.equal(recordShotsFired(empty).shotsFired, 1, 'default count is one shot');
+  const before = deepFreeze(statsOf(1, 1, { basic: 1 }));
+  for (const type of ['diver', '', undefined, 'Basic']) assert.throws(() => recordKill(before, type), /unknown enemy type/);
+  for (const count of [-1, 1.5, NaN]) assert.throws(() => recordShotsFired(before, count), /invalid shot count/);
+  assert.deepEqual(before, statsOf(1, 1, { basic: 1 }));
+});
+
+test('run stats: accuracy is a rounded whole percent, 0% with no shots and never above 100%', () => {
+  assert.equal(accuracyPercent(createRunStats()), 0);
+  assert.equal(accuracyPercent(statsOf(0, 0)), 0);
+  for (const [fired, hit, percent] of [[3, 1, 33], [3, 2, 67], [2, 1, 50], [8, 1, 13], [200, 1, 1], [201, 1, 0], [7, 7, 100], [1, 0, 0]]) {
+    assert.equal(accuracyPercent(statsOf(fired, hit)), percent, `${hit}/${fired}`);
+  }
+  assert.equal(accuracyPercent(statsOf(2, 5)), 100, 'capped at 100%');
+  assert.deepEqual(runStatsText(createRunStats(), 1), { stage: '01', basic: '0', elite: '0', boss: '0', accuracy: '0%', shots: '0/0' });
+  const stats = deepFreeze(statsOf(3, 2, { basic: 1, elite: 2, boss: 1 }));
+  assert.deepEqual(runStatsText(stats, 12), { stage: '12', basic: '1', elite: '2', boss: '1', accuracy: '67%', shots: '2/3' });
+});
+
+// Put a live player shot exactly on a target so the next collisions() call hits it.
+const aimShot = (shot, position) => { shot.position.copy(position); shot.previous = { x: position.x, y: position.y, z: position.z }; };
+const statsDom = runtime => Object.fromEntries(['#statStage', '#statKillsBasic', '#statKillsElite', '#statKillsBoss', '#statAccuracy', '#statShots']
+  .map(id => [id, runtime.elements.get(id).textContent]));
+
+test('actual shots count per bolt: one normally, two with TWIN, none during cooldown', () => {
+  const { runtime } = powerGame();
+  runtime.player.x = 13.5; // nothing above the ship
+  runtime.firePlayer();
+  assert.equal(runtime.runStats.shotsFired, 1);
+  runtime.firePlayer(); // cooldown
+  assert.equal(runtime.runStats.shotsFired, 1);
+  collect(runtime, 'twin');
+  runtime.player.cooldown = 0;
+  runtime.firePlayer();
+  assert.equal(runtime.shots.length, 3);
+  assert.equal(runtime.runStats.shotsFired, 3, 'TWIN adds two shots');
+  assert.equal(runtime.runStats.shotsHit, 0);
+});
+
+test('actual hits count once per bolt including non-lethal hits; kills count lethal hits by type; body collisions are not kills', () => {
+  const { runtime } = powerGame();
+  runtime.game.stage = 3;
+  runtime.createWave();
+  runtime.player.invulnerable = 1000;
+  const elite = runtime.enemies.find(e => e.type === 'elite');
+  const boss = runtime.enemies.find(e => e.type === 'boss');
+  const basic = runtime.enemies.find(e => e.type === 'basic');
+  const fireAt = enemy => { runtime.player.cooldown = 0; runtime.firePlayer(); aimShot(runtime.shots.at(-1), enemy.mesh.position); runtime.collisions(); };
+  fireAt(elite); // 2 -> 1 health
+  assert.equal(elite.alive, true);
+  assert.deepEqual(runtime.runStats, statsOf(1, 1));
+  runtime.collisions(); // the same (dead) bolt cannot hit again
+  assert.deepEqual(runtime.runStats, statsOf(1, 1));
+  fireAt(elite);
+  assert.equal(elite.alive, false);
+  assert.deepEqual(runtime.runStats, statsOf(2, 2, { elite: 1 }));
+  fireAt(boss); // boss health > 1: non-lethal
+  assert.deepEqual(runtime.runStats, statsOf(3, 3, { elite: 1 }));
+  // One bolt overlapping two enemies hits only one of them.
+  const other = runtime.enemies.find(e => e.type === 'basic' && e !== basic && e.alive);
+  other.mesh.position.copy(basic.mesh.position);
+  fireAt(basic);
+  assert.equal([basic, other].filter(e => !e.alive).length, 1);
+  assert.deepEqual(runtime.runStats, statsOf(4, 4, { elite: 1, basic: 1 }));
+  // A miss: the bolt leaves the screen.
+  runtime.player.x = 13.5; runtime.player.cooldown = 0; runtime.firePlayer();
+  for (let frame = 0; frame < 40; frame++) runtime.update(.05);
+  assert.deepEqual(runtime.runStats, statsOf(5, 4, { elite: 1, basic: 1 }));
+  // Body collision removes the enemy and costs a life, but is not a hit or a kill.
+  runtime.player.invulnerable = 0;
+  const rammer = runtime.enemies.find(e => e.alive);
+  rammer.mesh.position.copy(runtime.player.mesh.position);
+  runtime.collisions();
+  assert.equal(rammer.alive, false);
+  assert.equal(runtime.game.lives, 2);
+  assert.deepEqual(runtime.runStats, statsOf(5, 4, { elite: 1, basic: 1 }));
+});
+
+test('actual game over writes stage, kills and accuracy; stats freeze after game over and restart from zero', () => {
+  const { runtime } = powerGame();
+  runtime.game.stage = 3;
+  runtime.createWave();
+  runtime.player.invulnerable = 1000;
+  const fireAt = enemy => { runtime.player.cooldown = 0; runtime.firePlayer(); aimShot(runtime.shots.at(-1), enemy.mesh.position); runtime.collisions(); };
+  fireAt(runtime.enemies.find(e => e.type === 'basic'));
+  fireAt(runtime.enemies.find(e => e.type === 'boss'));
+  runtime.player.x = 13.5; runtime.player.cooldown = 0; runtime.firePlayer(); // a miss, still in flight
+  runtime.game.stage = 4; // the stage shown is the one at game over
+  runtime.game.lives = 1;
+  runtime.player.invulnerable = 0;
+  runtime.loseLife();
+  assert.equal(runtime.game.state, 'over');
+  const expected = { '#statStage': '04', '#statKillsBasic': '1', '#statKillsElite': '0', '#statKillsBoss': '0', '#statAccuracy': '67%', '#statShots': '2/3' };
+  assert.deepEqual(statsDom(runtime), expected);
+  // After game over, input, a late collision and a direct kill change nothing.
+  const frozen = structuredClone(runtime.runStats);
+  runtime.player.cooldown = 0;
+  runtime.firePlayer();
+  runtime.windowEvents.keydown({ key: ' ', preventDefault() {} });
+  runtime.render(0); runtime.render(100);
+  const target = runtime.enemies.find(e => e.alive);
+  aimShot(runtime.shots.at(-1), target.mesh.position);
+  runtime.collisions();
+  runtime.destroyEnemy(runtime.enemies.find(e => e.alive && e.type === 'basic'));
+  runtime.windowEvents.keyup({ key: ' ' });
+  assert.deepEqual(runtime.runStats, frozen);
+  assert.deepEqual(statsDom(runtime), expected);
+  // A new game counts from zero; a game over with no shots shows 0%.
+  runtime.elements.get('#restartButton').listeners.click();
+  assert.equal(runtime.game.state, 'playing');
+  assert.deepEqual(runtime.runStats, createRunStats());
+  assert.deepEqual(statsDom(runtime), expected, 'the screen keeps the old values until the next game over');
+  runtime.game.lives = 1;
+  runtime.player.invulnerable = 0;
+  runtime.loseLife();
+  assert.deepEqual(statsDom(runtime), { '#statStage': '01', '#statKillsBasic': '0', '#statKillsElite': '0', '#statKillsBoss': '0', '#statAccuracy': '0%', '#statShots': '0/0' });
 });
